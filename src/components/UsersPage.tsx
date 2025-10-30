@@ -192,20 +192,6 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
     }
   };
 
-  const handleDelete = async (userId: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este usuario?')) return;
-
-    try {
-      const { error } = await supabase.from('users').delete().eq('id', userId);
-
-      if (error) throw error;
-
-      loadData();
-    } catch (err: any) {
-      alert('Error al eliminar el usuario: ' + err.message);
-    }
-  };
-
   const openDeleteModal = (user: User) => {
     setDeletingUser(user);
     setError('');
