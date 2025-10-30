@@ -880,5 +880,6 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
           </div>
         </div>
       )}
+
   );
 }

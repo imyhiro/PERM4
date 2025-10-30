@@ -804,5 +804,6 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
           </div>
         </div>
       )}
+
   );
 }
