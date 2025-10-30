@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { Package, Plus, X, Eye, Edit2, LayoutGrid, List } from 'lucide-react';
+import { Package, Plus, X, Eye, Edit2, Trash2, LayoutGrid, List } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 
 type Asset = Database['public']['Tables']['assets']['Row'];
