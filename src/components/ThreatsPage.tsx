@@ -166,6 +166,14 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
   };
 
   const getRiskLevelColor = (level: string) => {
+    const colors: Record<string, string> = {
+      critical: 'bg-red-600 text-white',
+      high: 'bg-red-100 text-red-700',
+      medium: 'bg-orange-100 text-orange-700',
+      low: 'bg-green-100 text-green-700',
+    };
+    return colors[level] || 'bg-slate-100 text-slate-700';
+  };
 
   const openDeleteModal = (threat: Threat) => {
     setDeletingThreat(threat);
@@ -182,20 +190,12 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
       if (error) throw error;
       setShowDeleteModal(false);
       setDeletingThreat(null);
-      loadThreats();
+      loadData();
     } catch (err: any) {
       setError(err.message || 'Error al eliminar la amenaza');
     } finally {
       setSubmitting(false);
     }
-  };
-    const colors: Record<string, string> = {
-      critical: 'bg-red-600 text-white',
-      high: 'bg-red-100 text-red-700',
-      medium: 'bg-orange-100 text-orange-700',
-      low: 'bg-green-100 text-green-700',
-    };
-    return colors[level] || 'bg-slate-100 text-slate-700';
   };
 
   const getRiskLevelLabel = (level: string) => {
@@ -369,16 +369,22 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
                   Ver
                 </button>
                 {(profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant') && (
-                  <button
-                    onClick={() => handleEdit(threat)}
-                    className="flex-1 inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium transition text-sm"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    Editar
-                  </button>
-                      <button onClick={() => openDeleteModal(threat)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="Eliminar amenaza">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                  <>
+                    <button
+                      onClick={() => handleEdit(threat)}
+                      className="flex-1 inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium transition text-sm"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => openDeleteModal(threat)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                      title="Eliminar amenaza"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -435,18 +441,23 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
                         Ver
                       </button>
                       {(profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant') && (
-                        <button
-                          onClick={() => handleEdit(threat)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          Editar
-                        </button>
-                      )}
-                          <button onClick={() => openDeleteModal(threat)} className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium">
+                        <>
+                          <button
+                            onClick={() => handleEdit(threat)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(threat)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
+                          >
                             <Trash2 className="w-4 h-4" />
                             Eliminar
                           </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -854,7 +865,6 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
           </div>
         </div>
       )}
-    </div>
 
       {showDeleteModal && deletingThreat && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -880,6 +890,6 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
           </div>
         </div>
       )}
-
+    </div>
   );
 }

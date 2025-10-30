@@ -163,6 +163,13 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
   };
 
   const getValueColor = (value: string) => {
+    const colors: Record<string, string> = {
+      high: 'bg-red-100 text-red-700',
+      medium: 'bg-orange-100 text-orange-700',
+      low: 'bg-green-100 text-green-700',
+    };
+    return colors[value] || 'bg-slate-100 text-slate-700';
+  };
 
   const openDeleteModal = (asset: Asset) => {
     setDeletingAsset(asset);
@@ -179,19 +186,12 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
       if (error) throw error;
       setShowDeleteModal(false);
       setDeletingAsset(null);
-      loadAssets();
+      loadData();
     } catch (err: any) {
       setError(err.message || 'Error al eliminar el activo');
     } finally {
       setSubmitting(false);
     }
-  };
-    const colors: Record<string, string> = {
-      high: 'bg-red-100 text-red-700',
-      medium: 'bg-orange-100 text-orange-700',
-      low: 'bg-green-100 text-green-700',
-    };
-    return colors[value] || 'bg-slate-100 text-slate-700';
   };
 
   const getValueLabel = (value: string) => {
@@ -341,16 +341,22 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
                   Ver
                 </button>
                 {(profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant') && (
-                  <button
-                    onClick={() => handleEdit(asset)}
-                    className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium transition text-sm"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    Editar
-                  </button>
-                      <button onClick={() => openDeleteModal(asset)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="Eliminar activo">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                  <>
+                    <button
+                      onClick={() => handleEdit(asset)}
+                      className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium transition text-sm"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => openDeleteModal(asset)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                      title="Eliminar activo"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -405,18 +411,23 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
                         Ver
                       </button>
                       {(profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant') && (
-                        <button
-                          onClick={() => handleEdit(asset)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition text-sm font-medium"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          Editar
-                        </button>
-                      )}
-                          <button onClick={() => openDeleteModal(asset)} className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium">
+                        <>
+                          <button
+                            onClick={() => handleEdit(asset)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition text-sm font-medium"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(asset)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
+                          >
                             <Trash2 className="w-4 h-4" />
                             Eliminar
                           </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -778,7 +789,6 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
           </div>
         </div>
       )}
-    </div>
 
       {showDeleteModal && deletingAsset && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -804,6 +814,6 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
           </div>
         </div>
       )}
-
+    </div>
   );
 }

@@ -283,6 +283,11 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
       office: 'Oficina',
       plant: 'Planta',
       warehouse: 'Almacén',
+      home: 'Hogar',
+      transit: 'Tránsito',
+    };
+    return labels[type] || type;
+  };
 
   const openDeleteModal = (site: Site) => {
     setDeletingSite(site);
@@ -312,11 +317,6 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
     } finally {
       setSubmitting(false);
     }
-  };
-      home: 'Hogar',
-      transit: 'Tránsito',
-    };
-    return labels[type] || type;
   };
 
   const getRiskClassColor = (risk: string) => {
@@ -473,20 +473,22 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
                       Ver
                     </button>
                     {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
-                      <button
-                        onClick={() => handleEdit(site)}
-                        className="flex-1 inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-medium transition text-sm"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => openDeleteModal(site)}
-                        className="flex-1 inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium transition text-sm"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Eliminar
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleEdit(site)}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-medium transition text-sm"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(site)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                          title="Eliminar sitio"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -539,21 +541,23 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
                         Ver
                       </button>
                       {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
-                        <button
-                          onClick={() => handleEdit(site)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-green-600 hover:bg-green-50 rounded-lg transition text-sm font-medium"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          Editar
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleEdit(site)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-green-600 hover:bg-green-50 rounded-lg transition text-sm font-medium"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(site)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Eliminar
+                          </button>
+                        </>
                       )}
-                        <button
-                          onClick={() => openDeleteModal(site)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Eliminar
-                        </button>
                     </div>
                   </td>
                 </tr>
@@ -1188,7 +1192,6 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
           </div>
         </div>
       )}
-    </div>
 
       {showDeleteModal && deletingSite && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1248,6 +1251,6 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
           </div>
         </div>
       )}
-
+    </div>
   );
 }

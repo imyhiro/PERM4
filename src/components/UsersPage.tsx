@@ -214,7 +214,7 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
 
       setShowDeleteModal(false);
       setDeletingUser(null);
-      loadUsers();
+      loadData();
     } catch (err: any) {
       setError(err.message || 'Error al eliminar el usuario');
     } finally {
@@ -390,17 +390,10 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
                       <Edit2 className="w-4 h-4" />
                       Editar
                     </button>
+                    {user.role !== 'super_admin' && (
                       <button
                         onClick={() => openDeleteModal(user)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                        title="Eliminar usuario"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    {user.role !== 'super_admin' && (
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition"
                         title="Eliminar usuario"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -474,14 +467,7 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
                             </button>
                             {user.role !== 'super_admin' && (
                               <button
-                              <button
                                 onClick={() => openDeleteModal(user)}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Eliminar
-                              </button>
-                                onClick={() => handleDelete(user.id)}
                                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
                                 title="Eliminar usuario"
                               >
