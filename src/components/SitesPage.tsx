@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { MapPin, Plus, X, Building2, Eye, Edit2, LayoutGrid, List } from 'lucide-react';
+import { MapPin, Plus, X, Building2, Eye, Edit2, LayoutGrid, List, Trash2 } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 
 type Site = Database['public']['Tables']['sites']['Row'];
@@ -17,6 +17,8 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingSite, setDeletingSite] = useState<Site | null>(null);
   const [selectedSite, setSelectedSite] = useState<Site | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [formData, setFormData] = useState({
@@ -281,6 +283,36 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
       office: 'Oficina',
       plant: 'Planta',
       warehouse: 'Almacén',
+
+  const openDeleteModal = (site: Site) => {
+    setDeletingSite(site);
+    setError('');
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingSite) return;
+
+    setError('');
+    setSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('sites')
+        .delete()
+        .eq('id', deletingSite.id);
+
+      if (error) throw error;
+
+      setShowDeleteModal(false);
+      setDeletingSite(null);
+      loadData();
+    } catch (err: any) {
+      setError(err.message || 'Error al eliminar el sitio');
+    } finally {
+      setSubmitting(false);
+    }
+  };
       home: 'Hogar',
       transit: 'Tránsito',
     };
@@ -448,6 +480,13 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
                         <Edit2 className="w-4 h-4" />
                         Editar
                       </button>
+                      <button
+                        onClick={() => openDeleteModal(site)}
+                        className="flex-1 inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium transition text-sm"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Eliminar
+                      </button>
                     )}
                   </div>
                 </div>
@@ -508,6 +547,13 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
                           Editar
                         </button>
                       )}
+                        <button
+                          onClick={() => openDeleteModal(site)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Eliminar
+                        </button>
                     </div>
                   </td>
                 </tr>
@@ -1143,5 +1189,64 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
         </div>
       )}
     </div>
+
+      {showDeleteModal && deletingSite && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-900">Eliminar Sitio</h3>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletingSite(null);
+                  setError('');
+                }}
+                className="p-2 hover:bg-slate-100 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <p className="text-center text-slate-700 mb-2">
+                ¿Estás seguro de que deseas eliminar el sitio <span className="font-semibold">"{deletingSite.name}"</span>?
+              </p>
+              <p className="text-center text-sm text-slate-500">
+                Esta acción no se puede deshacer. Se eliminarán todos los activos, amenazas y análisis asociados.
+              </p>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletingSite(null);
+                  setError('');
+                }}
+                className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={submitting}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }

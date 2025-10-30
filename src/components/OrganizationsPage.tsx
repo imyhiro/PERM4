@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { Building2, Plus, X, Users, Check, Edit2, LayoutGrid, List } from 'lucide-react';
+import { Building2, Plus, X, Users, Check, Edit2, LayoutGrid, List, Trash2 } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 
 type Organization = Database['public']['Tables']['organizations']['Row'];
@@ -14,7 +14,9 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
+  const [deletingOrg, setDeletingOrg] = useState<Organization | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [formData, setFormData] = useState({
     name: '',
@@ -114,6 +116,36 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
     });
     setError('');
     setShowEditModal(true);
+  };
+
+  const openDeleteModal = (org: Organization) => {
+    setDeletingOrg(org);
+    setError('');
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingOrg) return;
+
+    setError('');
+    setSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .delete()
+        .eq('id', deletingOrg.id);
+
+      if (error) throw error;
+
+      setShowDeleteModal(false);
+      setDeletingOrg(null);
+      loadOrganizations();
+    } catch (err: any) {
+      setError(err.message || 'Error al eliminar la organización');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getLicenseInfo = (license: string, limit: number) => {
@@ -222,13 +254,22 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                     Creado {new Date(org.created_at).toLocaleDateString()}
                   </div>
                   {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
-                    <button
-                      onClick={() => openEditModal(org)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                      title="Editar organización"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openEditModal(org)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        title="Editar organización"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => openDeleteModal(org)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                        title="Eliminar organización"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -273,13 +314,22 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                     </td>
                     {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => openEditModal(org)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition text-sm font-medium"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          Editar
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openEditModal(org)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition text-sm font-medium"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(org)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Eliminar
+                          </button>
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -518,6 +568,65 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && deletingOrg && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-900">Eliminar Organización</h3>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletingOrg(null);
+                  setError('');
+                }}
+                className="p-2 hover:bg-slate-100 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <p className="text-center text-slate-700 mb-2">
+                ¿Estás seguro de que deseas eliminar la organización <span className="font-semibold">"{deletingOrg.name}"</span>?
+              </p>
+              <p className="text-center text-sm text-slate-500">
+                Esta acción no se puede deshacer. Se eliminarán todos los sitios, usuarios y datos asociados.
+              </p>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletingOrg(null);
+                  setError('');
+                }}
+                className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={submitting}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
           </div>
         </div>
       )}
