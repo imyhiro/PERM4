@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { AlertTriangle, Plus, X, Eye, Edit2, Trash2, LayoutGrid, List, Search } from 'lucide-react';
+import { AlertTriangle, Plus, X, Eye, Edit2, Trash2, LayoutGrid, List, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 
 type Threat = Database['public']['Tables']['threats']['Row'];
@@ -37,6 +37,8 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
   const [selectedThreats, setSelectedThreats] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     loadData();
@@ -313,6 +315,24 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
     environmental: 4,
   };
 
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      // Toggle direction
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (column: string) => {
+    if (sortColumn !== column) return <ArrowUpDown className="w-4 h-4 ml-1 opacity-50" />;
+    return sortDirection === 'asc' ?
+      <ArrowUp className="w-4 h-4 ml-1" /> :
+      <ArrowDown className="w-4 h-4 ml-1" />;
+  };
+
   const filteredThreats = threats
     .filter((threat) => {
       const searchLower = searchTerm.toLowerCase();
@@ -321,6 +341,42 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
       return nameMatch || categoryMatch;
     })
     .sort((a, b) => {
+      // Apply custom sort if a column is selected
+      if (sortColumn) {
+        let aVal: any, bVal: any;
+
+        switch (sortColumn) {
+          case 'name':
+            aVal = a.name.toLowerCase();
+            bVal = b.name.toLowerCase();
+            break;
+          case 'category':
+            aVal = getCategoryLabel(a.category).toLowerCase();
+            bVal = getCategoryLabel(b.category).toLowerCase();
+            break;
+          case 'site':
+            aVal = getSiteName(a.site_id).toLowerCase();
+            bVal = getSiteName(b.site_id).toLowerCase();
+            break;
+          case 'risk':
+            const riskOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+            aVal = riskOrder[a.risk_level as keyof typeof riskOrder] || 0;
+            bVal = riskOrder[b.risk_level as keyof typeof riskOrder] || 0;
+            break;
+          case 'status':
+            aVal = getStatusLabel(a.status).toLowerCase();
+            bVal = getStatusLabel(b.status).toLowerCase();
+            break;
+          default:
+            return 0;
+        }
+
+        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      }
+
+      // Default sort by category order
       const orderA = categoryOrder[a.category] || 999;
       const orderB = categoryOrder[b.category] || 999;
       if (orderA !== orderB) return orderA - orderB;
@@ -510,11 +566,36 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
                     />
                   </th>
                 )}
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Amenaza</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Categoría</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Sitio</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Riesgo</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Estado</th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center">Amenaza {getSortIcon('name')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('category')}
+                >
+                  <div className="flex items-center">Categoría {getSortIcon('category')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('site')}
+                >
+                  <div className="flex items-center">Sitio {getSortIcon('site')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('risk')}
+                >
+                  <div className="flex items-center">Riesgo {getSortIcon('risk')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('status')}
+                >
+                  <div className="flex items-center">Estado {getSortIcon('status')}</div>
+                </th>
                 <th className="text-right px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Acciones</th>
               </tr>
             </thead>
