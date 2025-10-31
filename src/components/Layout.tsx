@@ -15,7 +15,7 @@ export function Layout() {
   const renderContent = () => {
     switch (activeMenu) {
       case 'dashboard':
-        return <DashboardHome />;
+        return <DashboardHome onNavigate={setActiveMenu} />;
       case 'users':
         return <UsersPage onBack={() => setActiveMenu('dashboard')} />;
       case 'organizations':
@@ -27,7 +27,7 @@ export function Layout() {
       case 'threats':
         return <ThreatsPage onBack={() => setActiveMenu('dashboard')} />;
       default:
-        return <DashboardHome />;
+        return <DashboardHome onNavigate={setActiveMenu} />;
     }
   };
 

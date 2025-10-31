@@ -71,7 +71,8 @@ INSTRUCCIONES OBLIGATORIAS:
 2. Genera EXACTAMENTE 12 amenazas (mínimo)
 3. Usa español
 4. Solo seguridad FÍSICA (NO ciberseguridad)
-5. Sé específico para la industria "${industry_type}"
+5. Sé genérico para la industria "${industry_type}"
+6. Trata de ampliar tu búsqueda
 
 CATEGORÍAS DE ACTIVOS (distribuye entre):
 - Personas: Empleados, visitantes, contratistas, personal clave
@@ -88,11 +89,11 @@ Responde SOLO con este JSON (sin \`\`\`json ni texto adicional):
 {
   "assets": [
     {"name": "Nombre", "type": "Personas|Bienes|Procesos|Información", "description": "Descripción específica", "value": "critical|high|medium|low"},
-    ... (MÍNIMO 18 items)
+    ... (MÍNIMO 20 items)
   ],
   "threats": [
     {"name": "Nombre", "category": "Naturales|Tecnológicas|Sociales", "description": "Descripción específica", "probability": "high|medium|low", "impact": "high|medium|low"},
-    ... (MÍNIMO 12 items)
+    ... (MÍNIMO 20 items)
   ]
 }`
           },

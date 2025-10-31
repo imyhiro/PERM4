@@ -4,7 +4,11 @@ import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
 import { Building2, MapPin, Users, Shield, AlertTriangle, TrendingUp } from 'lucide-react';
 
-export function DashboardHome() {
+interface DashboardHomeProps {
+  onNavigate?: (page: string) => void;
+}
+
+export function DashboardHome({ onNavigate }: DashboardHomeProps) {
   const { profile } = useAuth();
   const { selectedOrganizationId, selectedSiteId } = useApp();
   const [stats, setStats] = useState({
@@ -110,6 +114,7 @@ export function DashboardHome() {
         icon: Building2,
         color: 'bg-blue-500',
         bgColor: 'bg-blue-50',
+        page: 'organizations',
       });
     }
 
@@ -119,6 +124,7 @@ export function DashboardHome() {
       icon: MapPin,
       color: 'bg-green-500',
       bgColor: 'bg-green-50',
+      page: 'sites',
     });
 
     if (role === 'super_admin') {
@@ -128,6 +134,7 @@ export function DashboardHome() {
         icon: Users,
         color: 'bg-orange-500',
         bgColor: 'bg-orange-50',
+        page: 'users',
       });
     }
 
@@ -138,6 +145,7 @@ export function DashboardHome() {
         icon: Shield,
         color: 'bg-blue-500',
         bgColor: 'bg-blue-50',
+        page: 'assets',
       },
       {
         label: 'Amenazas',
@@ -145,6 +153,7 @@ export function DashboardHome() {
         icon: AlertTriangle,
         color: 'bg-red-500',
         bgColor: 'bg-red-50',
+        page: 'threats',
       }
     );
 
@@ -183,16 +192,17 @@ export function DashboardHome() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {visibleStats.map((stat, index) => (
-            <div
+            <button
               key={index}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              onClick={() => onNavigate?.(stat.page)}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer text-left hover:border-blue-300"
             >
               <div className={`${stat.bgColor} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}>
                 <stat.icon className={`w-6 h-6 ${stat.color.replace('bg-', 'text-')}`} />
               </div>
               <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
               <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-            </div>
+            </button>
           ))}
         </div>
       )}

@@ -35,6 +35,8 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
   });
   const [showCustomIndustry, setShowCustomIndustry] = useState(false);
   const [customIndustry, setCustomIndustry] = useState('');
+  const [showCustomLocationType, setShowCustomLocationType] = useState(false);
+  const [customLocationType, setCustomLocationType] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [setupProgress, setSetupProgress] = useState('');
