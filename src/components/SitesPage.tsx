@@ -10,7 +10,7 @@ type Organization = Database['public']['Tables']['organizations']['Row'];
 
 export function SitesPage({ onBack }: { onBack: () => void }) {
   const { profile } = useAuth();
-  const { selectedOrganizationId } = useApp();
+  const { selectedOrganizationId, selectedSiteId } = useApp();
   const [sites, setSites] = useState<Site[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +50,7 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     loadData();
-  }, [selectedOrganizationId]);
+  }, [selectedOrganizationId, selectedSiteId]);
 
   const loadData = async () => {
     try {
@@ -69,10 +69,14 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
         setOrganizations(orgsResult.data || []);
       }
 
-      // Load sites based on selected organization
+      // Load sites based on selected organization and site
       let sitesQuery = supabase.from('sites').select('*');
 
-      if (selectedOrganizationId) {
+      if (selectedSiteId) {
+        // If a specific site is selected, show only that site
+        sitesQuery = sitesQuery.eq('id', selectedSiteId);
+      } else if (selectedOrganizationId) {
+        // If only an organization is selected, show all its sites
         sitesQuery = sitesQuery.eq('organization_id', selectedOrganizationId);
       }
 
