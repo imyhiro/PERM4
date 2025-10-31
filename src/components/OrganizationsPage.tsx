@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { Building2, Plus, X, Users, Check, Edit2, LayoutGrid, List, Trash2, Search } from 'lucide-react';
+import { Building2, Plus, X, Users, Check, Edit2, LayoutGrid, List, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 
 type Organization = Database['public']['Tables']['organizations']['Row'];
@@ -27,6 +27,8 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
   const [selectedOrgs, setSelectedOrgs] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     loadOrganizations();
@@ -151,11 +153,59 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
     }
   };
 
-  // Filter organizations based on search term
-  const filteredOrganizations = organizations.filter((org) => {
-    if (!searchTerm) return true;
-    return org.name.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (column: string) => {
+    if (sortColumn !== column) return <ArrowUpDown className="w-4 h-4 ml-1 opacity-50" />;
+    return sortDirection === 'asc' ?
+      <ArrowUp className="w-4 h-4 ml-1" /> :
+      <ArrowDown className="w-4 h-4 ml-1" />;
+  };
+
+  // Filter and sort organizations
+  const filteredOrganizations = organizations
+    .filter((org) => {
+      if (!searchTerm) return true;
+      return org.name.toLowerCase().includes(searchTerm.toLowerCase());
+    })
+    .sort((a, b) => {
+      if (sortColumn) {
+        let aVal: any, bVal: any;
+
+        switch (sortColumn) {
+          case 'name':
+            aVal = a.name.toLowerCase();
+            bVal = b.name.toLowerCase();
+            break;
+          case 'license':
+            aVal = a.license_type.toLowerCase();
+            bVal = b.license_type.toLowerCase();
+            break;
+          case 'limit':
+            aVal = a.license_limit || 0;
+            bVal = b.license_limit || 0;
+            break;
+          case 'created':
+            aVal = new Date(a.created_at).getTime();
+            bVal = new Date(b.created_at).getTime();
+            break;
+          default:
+            return 0;
+        }
+
+        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      }
+      return 0;
+    });
 
   const handleSelectAll = () => {
     if (selectedOrgs.size === filteredOrganizations.length) {
@@ -367,10 +417,30 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                     />
                   </th>
                 )}
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Organización</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Licencia</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Límite de sitios</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Creado</th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center">Organización {getSortIcon('name')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('license')}
+                >
+                  <div className="flex items-center">Licencia {getSortIcon('license')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('limit')}
+                >
+                  <div className="flex items-center">Límite de sitios {getSortIcon('limit')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('created')}
+                >
+                  <div className="flex items-center">Creado {getSortIcon('created')}</div>
+                </th>
                 {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
                   <th className="text-right px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Acciones</th>
                 )}

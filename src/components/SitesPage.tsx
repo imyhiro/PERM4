@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { MapPin, Plus, X, Building2, Eye, Edit2, LayoutGrid, List, Trash2, Search } from 'lucide-react';
+import { MapPin, Plus, X, Building2, Eye, Edit2, LayoutGrid, List, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 
 type Site = Database['public']['Tables']['sites']['Row'];
@@ -47,6 +47,8 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
   const [selectedSites, setSelectedSites] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     loadData();
@@ -390,18 +392,67 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
     return labels[risk] || risk;
   };
 
-  // Filter sites based on search term
-  const filteredSites = sites.filter(site => {
-    if (!searchTerm) return true;
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
 
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      site.name.toLowerCase().includes(searchLower) ||
-      site.location_city.toLowerCase().includes(searchLower) ||
-      site.location_state.toLowerCase().includes(searchLower) ||
-      site.location_country.toLowerCase().includes(searchLower)
-    );
-  });
+  const getSortIcon = (column: string) => {
+    if (sortColumn !== column) return <ArrowUpDown className="w-4 h-4 ml-1 opacity-50" />;
+    return sortDirection === 'asc' ?
+      <ArrowUp className="w-4 h-4 ml-1" /> :
+      <ArrowDown className="w-4 h-4 ml-1" />;
+  };
+
+  // Filter and sort sites
+  const filteredSites = sites
+    .filter(site => {
+      if (!searchTerm) return true;
+
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        site.name.toLowerCase().includes(searchLower) ||
+        site.location_city.toLowerCase().includes(searchLower) ||
+        site.location_state.toLowerCase().includes(searchLower) ||
+        site.location_country.toLowerCase().includes(searchLower)
+      );
+    })
+    .sort((a, b) => {
+      if (sortColumn) {
+        let aVal: any, bVal: any;
+
+        switch (sortColumn) {
+          case 'name':
+            aVal = a.name.toLowerCase();
+            bVal = b.name.toLowerCase();
+            break;
+          case 'industry':
+            aVal = a.industry_type.toLowerCase();
+            bVal = b.industry_type.toLowerCase();
+            break;
+          case 'location':
+            aVal = `${a.location_city} ${a.location_state}`.toLowerCase();
+            bVal = `${b.location_city} ${b.location_state}`.toLowerCase();
+            break;
+          case 'risk':
+            const riskOrder = { high: 3, medium: 2, low: 1 };
+            aVal = riskOrder[a.risk_zone_classification as keyof typeof riskOrder] || 0;
+            bVal = riskOrder[b.risk_zone_classification as keyof typeof riskOrder] || 0;
+            break;
+          default:
+            return 0;
+        }
+
+        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      }
+      return 0;
+    });
 
   if (loading) {
     return (
@@ -606,10 +657,30 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
                     />
                   </th>
                 )}
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Sitio</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Industria</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Ubicación</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Clasificación</th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center">Sitio {getSortIcon('name')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('industry')}
+                >
+                  <div className="flex items-center">Industria {getSortIcon('industry')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('location')}
+                >
+                  <div className="flex items-center">Ubicación {getSortIcon('location')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('risk')}
+                >
+                  <div className="flex items-center">Clasificación {getSortIcon('risk')}</div>
+                </th>
                 <th className="text-right px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Acciones</th>
               </tr>
             </thead>

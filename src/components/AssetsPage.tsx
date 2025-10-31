@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { Package, Plus, X, Eye, Edit2, Trash2, LayoutGrid, List, Search } from 'lucide-react';
+import { Package, Plus, X, Eye, Edit2, Trash2, LayoutGrid, List, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 
 type Asset = Database['public']['Tables']['assets']['Row'];
@@ -36,6 +36,8 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
   const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     loadData();
@@ -283,6 +285,22 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
     return 999; // Other types go last
   };
 
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (column: string) => {
+    if (sortColumn !== column) return <ArrowUpDown className="w-4 h-4 ml-1 opacity-50" />;
+    return sortDirection === 'asc' ?
+      <ArrowUp className="w-4 h-4 ml-1" /> :
+      <ArrowDown className="w-4 h-4 ml-1" />;
+  };
+
   const filteredAssets = assets
     .filter((asset) => {
       const searchLower = searchTerm.toLowerCase();
@@ -292,6 +310,41 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
       );
     })
     .sort((a, b) => {
+      if (sortColumn) {
+        let aVal: any, bVal: any;
+
+        switch (sortColumn) {
+          case 'name':
+            aVal = a.name.toLowerCase();
+            bVal = b.name.toLowerCase();
+            break;
+          case 'type':
+            aVal = a.type.toLowerCase();
+            bVal = b.type.toLowerCase();
+            break;
+          case 'site':
+            aVal = getSiteName(a.site_id).toLowerCase();
+            bVal = getSiteName(b.site_id).toLowerCase();
+            break;
+          case 'value':
+            const valueOrder = { high: 3, medium: 2, low: 1 };
+            aVal = valueOrder[a.value as keyof typeof valueOrder] || 0;
+            bVal = valueOrder[b.value as keyof typeof valueOrder] || 0;
+            break;
+          case 'status':
+            aVal = getStatusLabel(a.status).toLowerCase();
+            bVal = getStatusLabel(b.status).toLowerCase();
+            break;
+          default:
+            return 0;
+        }
+
+        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      }
+
+      // Default sort by type order
       const orderA = getAssetTypeOrder(a.type);
       const orderB = getAssetTypeOrder(b.type);
       if (orderA !== orderB) return orderA - orderB;
@@ -477,11 +530,36 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
                     />
                   </th>
                 )}
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Activo</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Tipo</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Sitio</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Valor</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Estado</th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center">Activo {getSortIcon('name')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('type')}
+                >
+                  <div className="flex items-center">Tipo {getSortIcon('type')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('site')}
+                >
+                  <div className="flex items-center">Sitio {getSortIcon('site')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('value')}
+                >
+                  <div className="flex items-center">Valor {getSortIcon('value')}</div>
+                </th>
+                <th
+                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
+                  onClick={() => handleSort('status')}
+                >
+                  <div className="flex items-center">Estado {getSortIcon('status')}</div>
+                </th>
                 <th className="text-right px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Acciones</th>
               </tr>
             </thead>

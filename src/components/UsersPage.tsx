@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { Users, Plus, X, Mail, Shield, Building2, Edit2, Trash2, Search, MapPin, LayoutGrid, List } from 'lucide-react';
+import { Users, Plus, X, Mail, Shield, Building2, Edit2, Trash2, Search, MapPin, LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 
 type User = Database['public']['Tables']['users']['Row'];
@@ -37,6 +37,8 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     loadData();
@@ -302,11 +304,63 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
     return org?.name || 'Desconocida';
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.full_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (column: string) => {
+    if (sortColumn !== column) return <ArrowUpDown className="w-4 h-4 ml-1 opacity-50" />;
+    return sortDirection === 'asc' ?
+      <ArrowUp className="w-4 h-4 ml-1" /> :
+      <ArrowDown className="w-4 h-4 ml-1" />;
+  };
+
+  const filteredUsers = users
+    .filter(
+      (user) =>
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (sortColumn) {
+        let aVal: any, bVal: any;
+
+        switch (sortColumn) {
+          case 'name':
+            aVal = a.full_name.toLowerCase();
+            bVal = b.full_name.toLowerCase();
+            break;
+          case 'email':
+            aVal = a.email.toLowerCase();
+            bVal = b.email.toLowerCase();
+            break;
+          case 'role':
+            aVal = getRoleInfo(a.role).label.toLowerCase();
+            bVal = getRoleInfo(b.role).label.toLowerCase();
+            break;
+          case 'organization':
+            aVal = getOrganizationName(a.organization_id).toLowerCase();
+            bVal = getOrganizationName(b.organization_id).toLowerCase();
+            break;
+          case 'created':
+            aVal = new Date(a.created_at).getTime();
+            bVal = new Date(b.created_at).getTime();
+            break;
+          default:
+            return 0;
+        }
+
+        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      }
+      return 0;
+    });
 
   const canManageUsers = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant';
 
@@ -477,17 +531,29 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
                       />
                     </th>
                   )}
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Usuario
+                  <th
+                    className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition"
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center">Usuario {getSortIcon('name')}</div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Rol
+                  <th
+                    className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition"
+                    onClick={() => handleSort('role')}
+                  >
+                    <div className="flex items-center">Rol {getSortIcon('role')}</div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Organización
+                  <th
+                    className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition"
+                    onClick={() => handleSort('organization')}
+                  >
+                    <div className="flex items-center">Organización {getSortIcon('organization')}</div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Creado
+                  <th
+                    className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition"
+                    onClick={() => handleSort('created')}
+                  >
+                    <div className="flex items-center">Creado {getSortIcon('created')}</div>
                   </th>
                   {canManageUsers && (
                     <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
