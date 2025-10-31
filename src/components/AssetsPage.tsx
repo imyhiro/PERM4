@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { Package, Plus, X, Eye, Edit2, Trash2, LayoutGrid, List } from 'lucide-react';
+import { Package, Plus, X, Eye, Edit2, Trash2, LayoutGrid, List, Search } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 
 type Asset = Database['public']['Tables']['assets']['Row'];
@@ -33,6 +33,9 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadData();
@@ -194,6 +197,50 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectedAssets.size === filteredAssets.length && filteredAssets.length > 0) {
+      setSelectedAssets(new Set());
+    } else {
+      setSelectedAssets(new Set(filteredAssets.map(asset => asset.id)));
+    }
+  };
+
+  const handleSelectAsset = (assetId: string) => {
+    const newSelected = new Set(selectedAssets);
+    if (newSelected.has(assetId)) {
+      newSelected.delete(assetId);
+    } else {
+      newSelected.add(assetId);
+    }
+    setSelectedAssets(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    setError('');
+    setSubmitting(true);
+
+    try {
+      const deletePromises = Array.from(selectedAssets).map(assetId =>
+        supabase.from('assets').delete().eq('id', assetId)
+      );
+
+      const results = await Promise.all(deletePromises);
+      const errors = results.filter(r => r.error);
+
+      if (errors.length > 0) {
+        throw new Error(`Error eliminando ${errors.length} activo(s)`);
+      }
+
+      setShowBulkDeleteModal(false);
+      setSelectedAssets(new Set());
+      loadData();
+    } catch (err: any) {
+      setError(err.message || 'Error al eliminar los activos');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const getValueLabel = (value: string) => {
     const labels: Record<string, string> = {
       high: 'Alto',
@@ -225,6 +272,14 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
     const site = sites.find((s) => s.id === siteId);
     return site?.name || 'Sitio no encontrado';
   };
+
+  const filteredAssets = assets.filter((asset) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      asset.name.toLowerCase().includes(searchLower) ||
+      asset.type.toLowerCase().includes(searchLower)
+    );
+  });
 
   if (loading) {
     return (
@@ -286,17 +341,44 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
         </div>
       </div>
 
+      <div className="mb-6 flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar activo por nombre o tipo..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        {selectedAssets.size > 0 && (profile?.role === 'super_admin' || profile?.role === 'admin') && (
+          <button
+            onClick={() => setShowBulkDeleteModal(true)}
+            className="flex items-center gap-2 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition text-sm whitespace-nowrap"
+            title={`Eliminar ${selectedAssets.size} seleccionado(s)`}
+          >
+            <Trash2 className="w-4 h-4" />
+            <span className="text-xs">({selectedAssets.size})</span>
+          </button>
+        )}
+      </div>
+
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
         </div>
       )}
 
-      {assets.length === 0 ? (
+      {filteredAssets.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
           <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">No hay activos</h3>
-          <p className="text-slate-600 mb-6">Comienza agregando tu primer activo</p>
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+            {assets.length === 0 ? 'No hay activos' : 'No se encontraron activos'}
+          </h3>
+          <p className="text-slate-600 mb-6">
+            {assets.length === 0 ? 'Comienza agregando tu primer activo' : 'Intenta con otro término de búsqueda'}
+          </p>
           {(profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant') && (
             <button
               onClick={() => setShowCreateModal(true)}
@@ -309,7 +391,7 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {assets.map((asset) => (
+          {filteredAssets.map((asset) => (
             <div
               key={asset.id}
               className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition"
@@ -367,6 +449,16 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
+                {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
+                  <th className="px-6 py-3 w-12">
+                    <input
+                      type="checkbox"
+                      checked={selectedAssets.size === filteredAssets.length && filteredAssets.length > 0}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </th>
+                )}
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Activo</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Tipo</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Sitio</th>
@@ -376,8 +468,18 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {assets.map((asset) => (
+              {filteredAssets.map((asset) => (
                 <tr key={asset.id} className="hover:bg-slate-50 transition">
+                  {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedAssets.has(asset.id)}
+                        onChange={() => handleSelectAsset(asset.id)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    </td>
+                  )}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -405,26 +507,26 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleView(asset)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition text-sm font-medium"
+                        className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                        title="Ver"
                       >
                         <Eye className="w-4 h-4" />
-                        Ver
                       </button>
                       {(profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant') && (
                         <>
                           <button
                             onClick={() => handleEdit(asset)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition text-sm font-medium"
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                            title="Editar"
                           >
                             <Edit2 className="w-4 h-4" />
-                            Editar
                           </button>
                           <button
                             onClick={() => openDeleteModal(asset)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                            title="Eliminar"
                           >
                             <Trash2 className="w-4 h-4" />
-                            Eliminar
                           </button>
                         </>
                       )}
@@ -810,6 +912,63 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
             <div className="flex gap-3">
               <button type="button" onClick={() => { setShowDeleteModal(false); setDeletingAsset(null); setError(''); }} className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition">Cancelar</button>
               <button onClick={handleDelete} disabled={submitting} className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed">{submitting ? 'Eliminando...' : 'Eliminar'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-900">Eliminar Activos</h3>
+              <button
+                onClick={() => {
+                  setShowBulkDeleteModal(false);
+                  setError('');
+                }}
+                className="p-2 hover:bg-slate-100 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <p className="text-center text-slate-700 mb-2">
+                ¿Estás seguro de que deseas eliminar <span className="font-semibold">{selectedAssets.size} activo(s)</span>?
+              </p>
+              <p className="text-center text-sm text-slate-500">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBulkDeleteModal(false);
+                  setError('');
+                }}
+                className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={submitting}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Eliminando...' : 'Eliminar'}
+              </button>
             </div>
           </div>
         </div>

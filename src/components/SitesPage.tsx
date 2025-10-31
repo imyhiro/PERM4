@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { MapPin, Plus, X, Building2, Eye, Edit2, LayoutGrid, List, Trash2 } from 'lucide-react';
+import { MapPin, Plus, X, Building2, Eye, Edit2, LayoutGrid, List, Trash2, Search } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 
 type Site = Database['public']['Tables']['sites']['Row'];
@@ -44,6 +44,9 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
     assets_added: number;
     threats_added: number;
   } | null>(null);
+  const [selectedSites, setSelectedSites] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadData();
@@ -321,6 +324,50 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectedSites.size === sites.length) {
+      setSelectedSites(new Set());
+    } else {
+      setSelectedSites(new Set(sites.map(site => site.id)));
+    }
+  };
+
+  const handleSelectSite = (siteId: string) => {
+    const newSelected = new Set(selectedSites);
+    if (newSelected.has(siteId)) {
+      newSelected.delete(siteId);
+    } else {
+      newSelected.add(siteId);
+    }
+    setSelectedSites(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    setError('');
+    setSubmitting(true);
+
+    try {
+      const deletePromises = Array.from(selectedSites).map(siteId =>
+        supabase.from('sites').delete().eq('id', siteId)
+      );
+
+      const results = await Promise.all(deletePromises);
+      const errors = results.filter(r => r.error);
+
+      if (errors.length > 0) {
+        throw new Error(`Error eliminando ${errors.length} sitio(s)`);
+      }
+
+      setShowBulkDeleteModal(false);
+      setSelectedSites(new Set());
+      loadData();
+    } catch (err: any) {
+      setError(err.message || 'Error al eliminar los sitios');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const getRiskClassColor = (risk: string) => {
     const colors: Record<string, string> = {
       high: 'bg-red-100 text-red-700',
@@ -338,6 +385,19 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
     };
     return labels[risk] || risk;
   };
+
+  // Filter sites based on search term
+  const filteredSites = sites.filter(site => {
+    if (!searchTerm) return true;
+
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      site.name.toLowerCase().includes(searchLower) ||
+      site.location_city.toLowerCase().includes(searchLower) ||
+      site.location_state.toLowerCase().includes(searchLower) ||
+      site.location_country.toLowerCase().includes(searchLower)
+    );
+  });
 
   if (loading) {
     return (
@@ -396,6 +456,29 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
         </div>
       </div>
 
+      <div className="mb-6 flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar sitio por nombre o ubicación..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        {selectedSites.size > 0 && (profile?.role === 'super_admin' || profile?.role === 'admin') && (
+          <button
+            onClick={() => setShowBulkDeleteModal(true)}
+            className="flex items-center gap-2 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition text-sm whitespace-nowrap"
+            title={`Eliminar ${selectedSites.size} seleccionado(s)`}
+          >
+            <Trash2 className="w-4 h-4" />
+            <span className="text-xs">({selectedSites.size})</span>
+          </button>
+        )}
+      </div>
+
       {sites.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
           <MapPin className="w-16 h-16 text-slate-300 mx-auto mb-4" />
@@ -411,9 +494,15 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
             </button>
           )}
         </div>
+      ) : filteredSites.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+          <Search className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">No se encontraron sitios</h3>
+          <p className="text-slate-600">No hay sitios que coincidan con "{searchTerm}"</p>
+        </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sites.map((site) => {
+          {filteredSites.map((site) => {
             const fullAddress = `${site.location_address}, ${site.location_city}, ${site.location_state}, ${site.location_country}`;
 
             return (
@@ -503,6 +592,16 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
+                {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
+                  <th className="px-6 py-3 w-12">
+                    <input
+                      type="checkbox"
+                      checked={selectedSites.size === sites.length && sites.length > 0}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </th>
+                )}
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Sitio</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Industria</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Ubicación</th>
@@ -511,8 +610,18 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {sites.map((site) => (
+              {filteredSites.map((site) => (
                 <tr key={site.id} className="hover:bg-slate-50 transition">
+                  {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedSites.has(site.id)}
+                        onChange={() => handleSelectSite(site.id)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    </td>
+                  )}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -537,26 +646,26 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleView(site)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition text-sm font-medium"
+                        className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                        title="Ver"
                       >
                         <Eye className="w-4 h-4" />
-                        Ver
                       </button>
                       {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
                         <>
                           <button
                             onClick={() => handleEdit(site)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-green-600 hover:bg-green-50 rounded-lg transition text-sm font-medium"
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
+                            title="Editar"
                           >
                             <Edit2 className="w-4 h-4" />
-                            Editar
                           </button>
                           <button
                             onClick={() => openDeleteModal(site)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                            title="Eliminar"
                           >
                             <Trash2 className="w-4 h-4" />
-                            Eliminar
                           </button>
                         </>
                       )}
@@ -1244,6 +1353,63 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
               </button>
               <button
                 onClick={handleDelete}
+                disabled={submitting}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-900">Eliminar Sitios</h3>
+              <button
+                onClick={() => {
+                  setShowBulkDeleteModal(false);
+                  setError('');
+                }}
+                className="p-2 hover:bg-slate-100 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <p className="text-center text-slate-700 mb-2">
+                ¿Estás seguro de que deseas eliminar <span className="font-semibold">{selectedSites.size} sitio(s)</span>?
+              </p>
+              <p className="text-center text-sm text-slate-500">
+                Esta acción no se puede deshacer. Se eliminarán todos los activos, amenazas y análisis asociados.
+              </p>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBulkDeleteModal(false);
+                  setError('');
+                }}
+                className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleBulkDelete}
                 disabled={submitting}
                 className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
               >

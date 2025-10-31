@@ -35,6 +35,8 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -222,6 +224,50 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectedUsers.size === filteredUsers.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(filteredUsers.map(user => user.id)));
+    }
+  };
+
+  const handleSelectUser = (userId: string) => {
+    const newSelected = new Set(selectedUsers);
+    if (newSelected.has(userId)) {
+      newSelected.delete(userId);
+    } else {
+      newSelected.add(userId);
+    }
+    setSelectedUsers(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    setError('');
+    setSubmitting(true);
+
+    try {
+      const deletePromises = Array.from(selectedUsers).map(userId =>
+        supabase.from('users').delete().eq('id', userId)
+      );
+
+      const results = await Promise.all(deletePromises);
+      const errors = results.filter(r => r.error);
+
+      if (errors.length > 0) {
+        throw new Error(`Error eliminando ${errors.length} usuario(s)`);
+      }
+
+      setShowBulkDeleteModal(false);
+      setSelectedUsers(new Set());
+      loadData();
+    } catch (err: any) {
+      setError(err.message || 'Error al eliminar los usuarios');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const openEditModal = (user: User) => {
     setEditingUser(user);
     setFormData({
@@ -321,17 +367,27 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
         </div>
       </div>
 
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+      <div className="mb-6 flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar usuarios por nombre o email..."
+            placeholder="Buscar usuario por nombre o email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
+        {selectedUsers.size > 0 && profile?.role === 'super_admin' && (
+          <button
+            onClick={() => setShowBulkDeleteModal(true)}
+            className="flex items-center gap-2 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition text-sm whitespace-nowrap"
+            title={`Eliminar ${selectedUsers.size} seleccionado(s)`}
+          >
+            <Trash2 className="w-4 h-4" />
+            <span className="text-xs">({selectedUsers.size})</span>
+          </button>
+        )}
       </div>
 
       {filteredUsers.length === 0 ? (
@@ -385,16 +441,16 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
                   <div className="flex gap-2 pt-4 border-t border-slate-100 mt-4">
                     <button
                       onClick={() => openEditModal(user)}
-                      className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium transition text-sm"
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                      title="Editar"
                     >
                       <Edit2 className="w-4 h-4" />
-                      Editar
                     </button>
-                    {user.role !== 'super_admin' && (
+                    {profile?.role === 'super_admin' && user.role !== 'super_admin' && (
                       <button
                         onClick={() => openDeleteModal(user)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                        title="Eliminar usuario"
+                        title="Eliminar"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -411,6 +467,16 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
+                  {profile?.role === 'super_admin' && (
+                    <th className="px-6 py-3 w-12">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    </th>
+                  )}
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     Usuario
                   </th>
@@ -435,6 +501,16 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
                   const roleInfo = getRoleInfo(user.role);
                   return (
                     <tr key={user.id} className="hover:bg-slate-50 transition">
+                      {profile?.role === 'super_admin' && (
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedUsers.has(user.id)}
+                            onChange={() => handleSelectUser(user.id)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                        </td>
+                      )}
                       <td className="px-6 py-4">
                         <div>
                           <div className="font-medium text-slate-900">{user.full_name}</div>
@@ -461,15 +537,15 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
                             <button
                               onClick={() => openEditModal(user)}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                              title="Editar usuario"
+                              title="Editar"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
-                            {user.role !== 'super_admin' && (
+                            {profile?.role === 'super_admin' && user.role !== 'super_admin' && (
                               <button
                                 onClick={() => openDeleteModal(user)}
                                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                                title="Eliminar usuario"
+                                title="Eliminar"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -820,6 +896,63 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
               </button>
               <button
                 onClick={handleDelete}
+                disabled={submitting}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-900">Eliminar Usuarios</h3>
+              <button
+                onClick={() => {
+                  setShowBulkDeleteModal(false);
+                  setError('');
+                }}
+                className="p-2 hover:bg-slate-100 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <p className="text-center text-slate-700 mb-2">
+                ¿Estás seguro de que deseas eliminar <span className="font-semibold">{selectedUsers.size} usuario(s)</span>?
+              </p>
+              <p className="text-center text-sm text-slate-500">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBulkDeleteModal(false);
+                  setError('');
+                }}
+                className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleBulkDelete}
                 disabled={submitting}
                 className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
               >

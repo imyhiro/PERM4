@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { FileText, Plus, X, ArrowLeft, Sparkles, AlertTriangle, CheckCircle } from 'lucide-react';
+import { FileText, Plus, X, ArrowLeft, Sparkles, AlertTriangle, CheckCircle, Trash2, Search } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 
 type Scenario = Database['public']['Tables']['scenarios']['Row'];
@@ -24,6 +24,7 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creationMode, setCreationMode] = useState<'manual' | 'ai' | null>(null);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Manual wizard states
   const [wizardStep, setWizardStep] = useState(1);
@@ -46,6 +47,15 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
   const [quickThreatForm, setQuickThreatForm] = useState({ name: '', category: '' });
   const [quickAdding, setQuickAdding] = useState(false);
   const [existingThreatIds, setExistingThreatIds] = useState<Set<string>>(new Set());
+
+  // Delete states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingScenario, setDeletingScenario] = useState<ScenarioWithDetails | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Bulk delete states
+  const [selectedScenarios, setSelectedScenarios] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -138,6 +148,93 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
   };
 
   const canCreateScenarios = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant';
+  const canDeleteScenarios = profile?.role === 'super_admin' || profile?.role === 'admin';
+
+  // Filter scenarios based on search term
+  const filteredScenarios = scenarios.filter((scenario) => {
+    if (!searchTerm) return true;
+
+    const searchLower = searchTerm.toLowerCase();
+    const assetName = scenario.asset?.name?.toLowerCase() || '';
+    const threatName = scenario.threat?.name?.toLowerCase() || '';
+
+    return assetName.includes(searchLower) || threatName.includes(searchLower);
+  });
+
+  // Delete functions
+  const openDeleteModal = (scenario: ScenarioWithDetails) => {
+    setDeletingScenario(scenario);
+    setError('');
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingScenario) return;
+    setError('');
+    setDeleting(true);
+
+    try {
+      const { error } = await supabase
+        .from('scenarios')
+        .delete()
+        .eq('id', deletingScenario.id);
+
+      if (error) throw error;
+
+      setShowDeleteModal(false);
+      setDeletingScenario(null);
+      await loadData();
+    } catch (err: any) {
+      console.error('Error deleting scenario:', err);
+      setError(`Error eliminando escenario: ${err.message}`);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedScenarios.size === scenarios.length) {
+      setSelectedScenarios(new Set());
+    } else {
+      setSelectedScenarios(new Set(scenarios.map(scenario => scenario.id)));
+    }
+  };
+
+  const handleSelectScenario = (scenarioId: string) => {
+    const newSelected = new Set(selectedScenarios);
+    if (newSelected.has(scenarioId)) {
+      newSelected.delete(scenarioId);
+    } else {
+      newSelected.add(scenarioId);
+    }
+    setSelectedScenarios(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    setError('');
+    setDeleting(true);
+
+    try {
+      const deletePromises = Array.from(selectedScenarios).map(scenarioId =>
+        supabase.from('scenarios').delete().eq('id', scenarioId)
+      );
+
+      const results = await Promise.all(deletePromises);
+      const errors = results.filter(r => r.error);
+
+      if (errors.length > 0) {
+        throw new Error(`Error eliminando ${errors.length} escenario(s)`);
+      }
+
+      setShowBulkDeleteModal(false);
+      setSelectedScenarios(new Set());
+      await loadData();
+    } catch (err: any) {
+      setError(err.message || 'Error al eliminar los escenarios');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // Group assets by type for organized display
   const groupAssetsByType = (assets: Asset[]) => {
@@ -538,21 +635,49 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
             <p className="text-gray-600 text-sm mt-1">Gestiona los escenarios de riesgo</p>
           </div>
         </div>
-        {canCreateScenarios && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            <Plus className="w-5 h-5" />
-            Crear Escenario
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {canCreateScenarios && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              <Plus className="w-5 h-5" />
+              Crear Escenario
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Error message */}
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
           {error}
+        </div>
+      )}
+
+      {/* Search Bar */}
+      {!loading && scenarios.length > 0 && (
+        <div className="mb-6 flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar escenario por activo o amenaza..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          {selectedScenarios.size > 0 && canDeleteScenarios && (
+            <button
+              onClick={() => setShowBulkDeleteModal(true)}
+              className="flex items-center gap-2 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition text-sm whitespace-nowrap"
+              title={`Eliminar ${selectedScenarios.size} seleccionado(s)`}
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="text-xs">({selectedScenarios.size})</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -563,6 +688,7 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
           <p className="text-sm text-blue-900">
             Mostrando los {scenarios.length} escenarios más recientes
             {scenarios.length >= 100 && ' (máximo 100)'}
+            {searchTerm && ` (${filteredScenarios.length} resultado${filteredScenarios.length !== 1 ? 's' : ''} para "${searchTerm}")`}
           </p>
         </div>
       )}
@@ -588,11 +714,33 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
             </button>
           )}
         </div>
+      ) : filteredScenarios.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No se encontraron escenarios</h3>
+          <p className="text-gray-600 mb-4">No hay escenarios que coincidan con "{searchTerm}"</p>
+          <button
+            onClick={() => setSearchTerm('')}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            Limpiar búsqueda
+          </button>
+        </div>
       ) : (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
+                {canDeleteScenarios && (
+                  <th className="px-6 py-3 w-12">
+                    <input
+                      type="checkbox"
+                      checked={selectedScenarios.size === filteredScenarios.length && filteredScenarios.length > 0}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Activo
                 </th>
@@ -605,13 +753,28 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Fecha
                 </th>
+                {canDeleteScenarios && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {scenarios.map((scenario) => {
+              {filteredScenarios.map((scenario) => {
                 const statusBadge = getStatusBadge(scenario.status || 'pending');
                 return (
                   <tr key={scenario.id} className="hover:bg-gray-50">
+                    {canDeleteScenarios && (
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedScenarios.has(scenario.id)}
+                          onChange={() => handleSelectScenario(scenario.id)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                      </td>
+                    )}
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">
                         {scenario.asset?.name || 'Activo no disponible'}
@@ -636,6 +799,17 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {new Date(scenario.created_at).toLocaleDateString()}
                     </td>
+                    {canDeleteScenarios && (
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => openDeleteModal(scenario)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                          title="Eliminar escenario"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -1359,6 +1533,122 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && deletingScenario && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Eliminar Escenario
+                </h3>
+                <p className="text-sm text-gray-600">
+                  ¿Estás seguro de que deseas eliminar este escenario?
+                </p>
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm font-medium text-gray-900">
+                    {deletingScenario.asset?.name || 'Activo no disponible'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Amenaza: {deletingScenario.threat?.name || 'Amenaza no disponible'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletingScenario(null);
+                  setError('');
+                }}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                {deleting ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-900">Eliminar Escenarios</h3>
+              <button
+                onClick={() => {
+                  setShowBulkDeleteModal(false);
+                  setError('');
+                }}
+                className="p-2 hover:bg-slate-100 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <p className="text-center text-slate-700 mb-2">
+                ¿Estás seguro de que deseas eliminar <span className="font-semibold">{selectedScenarios.size} escenario(s)</span>?
+              </p>
+              <p className="text-center text-sm text-slate-500">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBulkDeleteModal(false);
+                  setError('');
+                }}
+                className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={deleting}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
           </div>
         </div>
       )}

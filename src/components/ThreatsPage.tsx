@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { AlertTriangle, Plus, X, Eye, Edit2, Trash2, LayoutGrid, List } from 'lucide-react';
+import { AlertTriangle, Plus, X, Eye, Edit2, Trash2, LayoutGrid, List, Search } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 
 type Threat = Database['public']['Tables']['threats']['Row'];
@@ -34,6 +34,9 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [selectedThreats, setSelectedThreats] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadData();
@@ -198,6 +201,58 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
     }
   };
 
+  const handleSelectAll = () => {
+    // Get current filtered threats
+    const currentFiltered = threats.filter((threat) => {
+      const searchLower = searchTerm.toLowerCase();
+      const nameMatch = threat.name.toLowerCase().includes(searchLower);
+      const categoryMatch = getCategoryLabel(threat.category).toLowerCase().includes(searchLower);
+      return nameMatch || categoryMatch;
+    });
+
+    if (selectedThreats.size === currentFiltered.length && currentFiltered.length > 0) {
+      setSelectedThreats(new Set());
+    } else {
+      setSelectedThreats(new Set(currentFiltered.map(threat => threat.id)));
+    }
+  };
+
+  const handleSelectThreat = (threatId: string) => {
+    const newSelected = new Set(selectedThreats);
+    if (newSelected.has(threatId)) {
+      newSelected.delete(threatId);
+    } else {
+      newSelected.add(threatId);
+    }
+    setSelectedThreats(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    setError('');
+    setSubmitting(true);
+
+    try {
+      const deletePromises = Array.from(selectedThreats).map(threatId =>
+        supabase.from('threats').delete().eq('id', threatId)
+      );
+
+      const results = await Promise.all(deletePromises);
+      const errors = results.filter(r => r.error);
+
+      if (errors.length > 0) {
+        throw new Error(`Error eliminando ${errors.length} amenaza(s)`);
+      }
+
+      setShowBulkDeleteModal(false);
+      setSelectedThreats(new Set());
+      loadData();
+    } catch (err: any) {
+      setError(err.message || 'Error al eliminar las amenazas');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const getRiskLevelLabel = (level: string) => {
     const labels: Record<string, string> = {
       critical: 'Crítico',
@@ -249,6 +304,13 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
     const site = sites.find((s) => s.id === siteId);
     return site?.name || 'Sitio no encontrado';
   };
+
+  const filteredThreats = threats.filter((threat) => {
+    const searchLower = searchTerm.toLowerCase();
+    const nameMatch = threat.name.toLowerCase().includes(searchLower);
+    const categoryMatch = getCategoryLabel(threat.category).toLowerCase().includes(searchLower);
+    return nameMatch || categoryMatch;
+  });
 
   if (loading) {
     return (
@@ -310,17 +372,44 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
         </div>
       </div>
 
+      <div className="mb-6 flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar amenaza por nombre o categoría..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        {selectedThreats.size > 0 && (profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant') && (
+          <button
+            onClick={() => setShowBulkDeleteModal(true)}
+            className="flex items-center gap-2 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition text-sm whitespace-nowrap"
+            title={`Eliminar ${selectedThreats.size} seleccionado(s)`}
+          >
+            <Trash2 className="w-4 h-4" />
+            <span className="text-xs">({selectedThreats.size})</span>
+          </button>
+        )}
+      </div>
+
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
         </div>
       )}
 
-      {threats.length === 0 ? (
+      {filteredThreats.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
           <AlertTriangle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">No hay amenazas</h3>
-          <p className="text-slate-600 mb-6">Comienza agregando tu primera amenaza</p>
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+            {searchTerm ? 'No se encontraron amenazas' : 'No hay amenazas'}
+          </h3>
+          <p className="text-slate-600 mb-6">
+            {searchTerm ? 'Intenta con otro término de búsqueda' : 'Comienza agregando tu primera amenaza'}
+          </p>
           {(profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant') && (
             <button
               onClick={() => setShowCreateModal(true)}
@@ -333,7 +422,7 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {threats.map((threat) => (
+          {filteredThreats.map((threat) => (
             <div
               key={threat.id}
               className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition"
@@ -395,6 +484,16 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
+                {(profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant') && (
+                  <th className="px-6 py-3 w-12">
+                    <input
+                      type="checkbox"
+                      checked={selectedThreats.size === filteredThreats.length && filteredThreats.length > 0}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </th>
+                )}
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Amenaza</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Categoría</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase">Sitio</th>
@@ -404,8 +503,18 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {threats.map((threat) => (
+              {filteredThreats.map((threat) => (
                 <tr key={threat.id} className="hover:bg-slate-50 transition">
+                  {(profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant') && (
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedThreats.has(threat.id)}
+                        onChange={() => handleSelectThreat(threat.id)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    </td>
+                  )}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -435,26 +544,26 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleView(threat)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition text-sm font-medium"
+                        className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                        title="Ver"
                       >
                         <Eye className="w-4 h-4" />
-                        Ver
                       </button>
                       {(profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant') && (
                         <>
                           <button
                             onClick={() => handleEdit(threat)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                            title="Editar"
                           >
                             <Edit2 className="w-4 h-4" />
-                            Editar
                           </button>
                           <button
                             onClick={() => openDeleteModal(threat)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                            title="Eliminar"
                           >
                             <Trash2 className="w-4 h-4" />
-                            Eliminar
                           </button>
                         </>
                       )}
@@ -886,6 +995,63 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
             <div className="flex gap-3">
               <button type="button" onClick={() => { setShowDeleteModal(false); setDeletingThreat(null); setError(''); }} className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition">Cancelar</button>
               <button onClick={handleDelete} disabled={submitting} className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed">{submitting ? 'Eliminando...' : 'Eliminar'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-900">Eliminar Amenazas</h3>
+              <button
+                onClick={() => {
+                  setShowBulkDeleteModal(false);
+                  setError('');
+                }}
+                className="p-2 hover:bg-slate-100 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <p className="text-center text-slate-700 mb-2">
+                ¿Estás seguro de que deseas eliminar <span className="font-semibold">{selectedThreats.size} amenaza(s)</span>?
+              </p>
+              <p className="text-center text-sm text-slate-500">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBulkDeleteModal(false);
+                  setError('');
+                }}
+                className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={submitting}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Eliminando...' : 'Eliminar'}
+              </button>
             </div>
           </div>
         </div>
