@@ -139,6 +139,65 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
 
   const canCreateScenarios = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant';
 
+  // Group assets by type for organized display
+  const groupAssetsByType = (assets: Asset[]) => {
+    const groups: Record<string, Asset[]> = {
+      'Personas': [],
+      'Bienes': [],
+      'Procesos': [],
+      'Información': [],
+    };
+
+    assets.forEach(asset => {
+      const type = asset.type.toLowerCase();
+      if (type.includes('persona') || type.includes('empleado') || type.includes('personal') || type.includes('gente')) {
+        groups['Personas'].push(asset);
+      } else if (type.includes('bien') || type.includes('equipo') || type.includes('maquinaria') || type.includes('vehículo')) {
+        groups['Bienes'].push(asset);
+      } else if (type.includes('proceso') || type.includes('procedimiento') || type.includes('operación')) {
+        groups['Procesos'].push(asset);
+      } else if (type.includes('información') || type.includes('dato') || type.includes('documento') || type.includes('archivo')) {
+        groups['Información'].push(asset);
+      } else {
+        // Fallback: try to match with exact type names
+        if (asset.type === 'Personas') groups['Personas'].push(asset);
+        else if (asset.type === 'Bienes') groups['Bienes'].push(asset);
+        else if (asset.type === 'Procesos') groups['Procesos'].push(asset);
+        else if (asset.type === 'Información') groups['Información'].push(asset);
+        else if (asset.type.includes('Tecnología') || asset.type.includes('Sistema')) groups['Bienes'].push(asset);
+        else if (asset.type.includes('Instalaciones') || asset.type.includes('Inmueble')) groups['Bienes'].push(asset);
+        else groups['Bienes'].push(asset); // Default fallback
+      }
+    });
+
+    return groups;
+  };
+
+  // Group threats by category for organized display
+  const groupThreatsByCategory = (threats: Threat[]) => {
+    const groups: Record<string, Threat[]> = {
+      'Naturales': [],
+      'Sociales': [],
+      'Tecnológicas': [],
+    };
+
+    threats.forEach(threat => {
+      const category = threat.category.toLowerCase();
+      if (category.includes('natural')) {
+        groups['Naturales'].push(threat);
+      } else if (category.includes('social') || category.includes('human')) {
+        groups['Sociales'].push(threat);
+      } else if (category.includes('tecnológica') || category.includes('tecnologica') || category.includes('tecnologic')) {
+        groups['Tecnológicas'].push(threat);
+      } else {
+        // Fallback
+        groups['Tecnológicas'].push(threat);
+      }
+    });
+
+    return groups;
+  };
+
   // Coherence mapping: asset types to threat categories
   const getCoherentThreats = (asset: Asset, allThreats: Threat[]): Threat[] => {
     const assetType = asset.type.toLowerCase();
@@ -763,38 +822,114 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
                           </button>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
-                          {assets.map((asset) => {
-                            const scenariosCount = assetScenariosCount[asset.id] || 0;
-                            const hasScenarios = scenariosCount > 0;
+                        <div className="max-h-96 overflow-y-auto">
+                          {(() => {
+                            const groupedAssets = groupAssetsByType(assets);
+
+                            // Organize categories in 2 columns
+                            const leftCategories = ['Personas', 'Bienes'];
+                            const rightCategories = ['Procesos', 'Información'];
+
                             return (
-                              <button
-                                key={asset.id}
-                                onClick={() => handleAssetSelection(asset)}
-                                className={`p-3 border-2 rounded-lg hover:border-blue-500 transition text-left relative ${
-                                  hasScenarios ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:bg-blue-50'
-                                }`}
-                              >
-                                {hasScenarios && (
-                                  <div className="absolute top-2 right-2 flex items-center gap-1 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-medium">
-                                    <FileText className="w-3 h-3" />
-                                    <span>{scenariosCount} {scenariosCount === 1 ? 'escenario' : 'escenarios'}</span>
-                                  </div>
-                                )}
-                                <div className="flex flex-col gap-1">
-                                  <div className="font-medium text-gray-900 text-sm pr-20">{asset.name}</div>
-                                  <div className="text-xs text-gray-600">{asset.type}</div>
-                                  <span className={`self-start px-2 py-0.5 text-xs rounded mt-1 ${
-                                    asset.value === 'high' ? 'bg-red-100 text-red-800' :
-                                    asset.value === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-green-100 text-green-800'
-                                  }`}>
-                                    Valor: {asset.value === 'high' ? 'Alto' : asset.value === 'medium' ? 'Medio' : 'Bajo'}
-                                  </span>
+                              <div className="grid grid-cols-2 gap-4">
+                                {/* Left Column */}
+                                <div className="space-y-4">
+                                  {leftCategories.map(category => {
+                                    const categoryAssets = groupedAssets[category];
+                                    if (categoryAssets.length === 0) return null;
+
+                                    return (
+                                      <div key={category}>
+                                        <div className="mb-2 px-2 py-1 bg-gray-100 border-l-4 border-blue-500 rounded">
+                                          <h5 className="text-xs font-bold text-gray-700 uppercase tracking-wide">{category}</h5>
+                                        </div>
+                                        <div className="space-y-2">
+                                          {categoryAssets.map(asset => {
+                                            const scenariosCount = assetScenariosCount[asset.id] || 0;
+                                            const hasScenarios = scenariosCount > 0;
+                                            return (
+                                              <button
+                                                key={asset.id}
+                                                onClick={() => handleAssetSelection(asset)}
+                                                className={`w-full p-3 border-2 rounded-lg hover:border-blue-500 transition text-left relative ${
+                                                  hasScenarios ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:bg-blue-50'
+                                                }`}
+                                              >
+                                                {hasScenarios && (
+                                                  <div className="absolute top-2 right-2 flex items-center gap-1 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                                                    <FileText className="w-3 h-3" />
+                                                    <span>{scenariosCount}</span>
+                                                  </div>
+                                                )}
+                                                <div className="flex flex-col gap-1">
+                                                  <div className="font-medium text-gray-900 text-sm pr-12">{asset.name}</div>
+                                                  <span className={`self-start px-2 py-0.5 text-xs rounded ${
+                                                    asset.value === 'high' ? 'bg-red-100 text-red-800' :
+                                                    asset.value === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                    'bg-green-100 text-green-800'
+                                                  }`}>
+                                                    Valor: {asset.value === 'high' ? 'Alto' : asset.value === 'medium' ? 'Medio' : 'Bajo'}
+                                                  </span>
+                                                </div>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
-                              </button>
+
+                                {/* Right Column */}
+                                <div className="space-y-4">
+                                  {rightCategories.map(category => {
+                                    const categoryAssets = groupedAssets[category];
+                                    if (categoryAssets.length === 0) return null;
+
+                                    return (
+                                      <div key={category}>
+                                        <div className="mb-2 px-2 py-1 bg-gray-100 border-l-4 border-blue-500 rounded">
+                                          <h5 className="text-xs font-bold text-gray-700 uppercase tracking-wide">{category}</h5>
+                                        </div>
+                                        <div className="space-y-2">
+                                          {categoryAssets.map(asset => {
+                                            const scenariosCount = assetScenariosCount[asset.id] || 0;
+                                            const hasScenarios = scenariosCount > 0;
+                                            return (
+                                              <button
+                                                key={asset.id}
+                                                onClick={() => handleAssetSelection(asset)}
+                                                className={`w-full p-3 border-2 rounded-lg hover:border-blue-500 transition text-left relative ${
+                                                  hasScenarios ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:bg-blue-50'
+                                                }`}
+                                              >
+                                                {hasScenarios && (
+                                                  <div className="absolute top-2 right-2 flex items-center gap-1 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                                                    <FileText className="w-3 h-3" />
+                                                    <span>{scenariosCount}</span>
+                                                  </div>
+                                                )}
+                                                <div className="flex flex-col gap-1">
+                                                  <div className="font-medium text-gray-900 text-sm pr-12">{asset.name}</div>
+                                                  <span className={`self-start px-2 py-0.5 text-xs rounded ${
+                                                    asset.value === 'high' ? 'bg-red-100 text-red-800' :
+                                                    asset.value === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                    'bg-green-100 text-green-800'
+                                                  }`}>
+                                                    Valor: {asset.value === 'high' ? 'Alto' : asset.value === 'medium' ? 'Medio' : 'Bajo'}
+                                                  </span>
+                                                </div>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             );
-                          })}
+                          })()}
                         </div>
                       )}
                     </div>
@@ -860,61 +995,89 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
 
                           return (
                             <>
-                              <div className="mb-2 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                              <div className="mb-3 text-xs text-gray-600 bg-gray-50 p-2 rounded">
                                 Mostrando {coherentThreats.length} de {threats.length} amenazas coherentes con "{selectedAsset.type}"
                               </div>
-                              <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto">
-                                {coherentThreats.map((threat) => {
-                                  const isSelected = selectedThreats.includes(threat.id);
-                                  const isAlreadyUsed = existingThreatIds.has(threat.id);
 
-                                  return (
-                                    <div
-                                      key={threat.id}
-                                      onClick={() => toggleThreatSelection(threat.id)}
-                                      className={`p-2 border-2 rounded-lg transition relative ${
-                                        isAlreadyUsed
-                                          ? 'border-gray-300 bg-gray-100 opacity-60 cursor-not-allowed'
-                                          : isSelected
-                                          ? 'border-blue-500 bg-blue-50 cursor-pointer'
-                                          : 'border-gray-200 hover:border-blue-300 cursor-pointer'
-                                      }`}
-                                    >
-                                      {isAlreadyUsed && (
-                                        <div className="absolute top-1 right-1 flex items-center gap-0.5 bg-gray-600 text-white px-1.5 py-0.5 rounded text-xs">
-                                          <CheckCircle className="w-2.5 h-2.5" />
-                                          <span>Ya usado</span>
+                              {(() => {
+                                const groupedThreats = groupThreatsByCategory(coherentThreats);
+                                const categories = ['Naturales', 'Sociales', 'Tecnológicas'];
+
+                                return (
+                                  <div className="grid grid-cols-3 gap-3 max-h-80 overflow-y-auto">
+                                    {categories.map(category => {
+                                      const categoryThreats = groupedThreats[category];
+
+                                      return (
+                                        <div key={category} className="space-y-2">
+                                          <div className="sticky top-0 bg-white z-10 pb-2">
+                                            <div className="px-2 py-1 bg-gradient-to-r from-gray-100 to-gray-50 border-l-4 border-orange-500 rounded">
+                                              <h5 className="text-xs font-bold text-gray-700 uppercase tracking-wide">{category}</h5>
+                                              <p className="text-xs text-gray-500">{categoryThreats.length} amenazas</p>
+                                            </div>
+                                          </div>
+
+                                          {categoryThreats.length === 0 ? (
+                                            <div className="p-4 text-center text-xs text-gray-400 bg-gray-50 rounded border border-dashed border-gray-300">
+                                              Sin amenazas coherentes
+                                            </div>
+                                          ) : (
+                                            <div className="space-y-2">
+                                              {categoryThreats.map((threat) => {
+                                                const isSelected = selectedThreats.includes(threat.id);
+                                                const isAlreadyUsed = existingThreatIds.has(threat.id);
+
+                                                return (
+                                                  <div
+                                                    key={threat.id}
+                                                    onClick={() => toggleThreatSelection(threat.id)}
+                                                    className={`p-2 border-2 rounded-lg transition relative ${
+                                                      isAlreadyUsed
+                                                        ? 'border-gray-300 bg-gray-100 opacity-60 cursor-not-allowed'
+                                                        : isSelected
+                                                        ? 'border-orange-500 bg-orange-50 cursor-pointer'
+                                                        : 'border-gray-200 hover:border-orange-300 cursor-pointer'
+                                                    }`}
+                                                  >
+                                                    {isAlreadyUsed && (
+                                                      <div className="absolute top-1 right-1 flex items-center gap-0.5 bg-gray-600 text-white px-1.5 py-0.5 rounded text-xs">
+                                                        <CheckCircle className="w-2.5 h-2.5" />
+                                                        <span>Usado</span>
+                                                      </div>
+                                                    )}
+                                                    <div className="flex items-start gap-2">
+                                                      <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        disabled={isAlreadyUsed}
+                                                        onChange={() => {}}
+                                                        className="mt-0.5 w-3.5 h-3.5 text-orange-600 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                                                      />
+                                                      <div className="flex-1 min-w-0">
+                                                        <div className={`font-medium text-sm leading-tight ${isAlreadyUsed ? 'text-gray-500' : 'text-gray-900'}`}>
+                                                          {threat.name}
+                                                        </div>
+                                                        <div className="flex gap-1 mt-1">
+                                                          <span className={`text-xs px-1.5 py-0.5 rounded ${isAlreadyUsed ? 'bg-gray-200 text-gray-500' : 'bg-gray-100 text-gray-700'}`}>
+                                                            P:{threat.probability}
+                                                          </span>
+                                                          <span className={`text-xs px-1.5 py-0.5 rounded ${isAlreadyUsed ? 'bg-gray-200 text-gray-500' : 'bg-gray-100 text-gray-700'}`}>
+                                                            I:{threat.impact}
+                                                          </span>
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          )}
                                         </div>
-                                      )}
-                                      <div className="flex items-start gap-2">
-                                        <input
-                                          type="checkbox"
-                                          checked={isSelected}
-                                          disabled={isAlreadyUsed}
-                                          onChange={() => {}}
-                                          className="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                                        />
-                                        <div className="flex-1 min-w-0">
-                                          <div className={`font-medium text-sm leading-tight ${isAlreadyUsed ? 'text-gray-500' : 'text-gray-900'}`}>
-                                            {threat.name}
-                                          </div>
-                                          <div className={`text-xs mt-0.5 ${isAlreadyUsed ? 'text-gray-400' : 'text-gray-600'}`}>
-                                            {threat.category}
-                                          </div>
-                                          <div className="flex gap-1 mt-1">
-                                            <span className={`text-xs px-1.5 py-0.5 rounded ${isAlreadyUsed ? 'bg-gray-200 text-gray-500' : 'bg-gray-100 text-gray-700'}`}>
-                                              P:{threat.probability}
-                                            </span>
-                                            <span className={`text-xs px-1.5 py-0.5 rounded ${isAlreadyUsed ? 'bg-gray-200 text-gray-500' : 'bg-gray-100 text-gray-700'}`}>
-                                              I:{threat.impact}
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              })()}
                             </>
                           );
                         })()}
