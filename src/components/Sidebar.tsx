@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
+  FileText,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -54,7 +55,8 @@ export function Sidebar({ collapsed, onToggle, activeMenu, onMenuChange }: Sideb
 
     items.push(
       { id: 'assets', label: 'Activos', icon: Shield, section: 'catalogs' },
-      { id: 'threats', label: 'Amenazas', icon: AlertTriangle, section: 'catalogs' }
+      { id: 'threats', label: 'Amenazas', icon: AlertTriangle, section: 'catalogs' },
+      { id: 'scenarios', label: 'Escenarios', icon: FileText, section: 'catalogs' }
     );
 
     return items;

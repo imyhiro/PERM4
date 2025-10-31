@@ -7,6 +7,7 @@ import { OrganizationsPage } from './OrganizationsPage';
 import { SitesPage } from './SitesPage';
 import { AssetsPage } from './AssetsPage';
 import { ThreatsPage } from './ThreatsPage';
+import { ScenariosPage } from './ScenariosPage';
 
 export function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -26,6 +27,8 @@ export function Layout() {
         return <AssetsPage onBack={() => setActiveMenu('dashboard')} />;
       case 'threats':
         return <ThreatsPage onBack={() => setActiveMenu('dashboard')} />;
+      case 'scenarios':
+        return <ScenariosPage onBack={() => setActiveMenu('dashboard')} />;
       default:
         return <DashboardHome onNavigate={setActiveMenu} />;
     }
