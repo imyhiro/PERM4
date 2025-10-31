@@ -842,6 +842,7 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
                                       <div key={category}>
                                         <div className="mb-2 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-500 border-l-4 border-blue-700 rounded shadow-sm">
                                           <h5 className="text-xs font-bold text-white uppercase tracking-wider">{category}</h5>
+                                          <p className="text-xs text-blue-100 mt-0.5">{categoryAssets.length} activo{categoryAssets.length !== 1 ? 's' : ''}</p>
                                         </div>
                                         <div className="space-y-1.5">
                                           {categoryAssets.map(asset => {
@@ -903,6 +904,7 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
                                       <div key={category}>
                                         <div className="mb-2 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-500 border-l-4 border-blue-700 rounded shadow-sm">
                                           <h5 className="text-xs font-bold text-white uppercase tracking-wider">{category}</h5>
+                                          <p className="text-xs text-blue-100 mt-0.5">{categoryAssets.length} activo{categoryAssets.length !== 1 ? 's' : ''}</p>
                                         </div>
                                         <div className="space-y-1.5">
                                           {categoryAssets.map(asset => {
