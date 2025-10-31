@@ -150,16 +150,37 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
   const canCreateScenarios = profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant';
   const canDeleteScenarios = profile?.role === 'super_admin' || profile?.role === 'admin';
 
-  // Filter scenarios based on search term
-  const filteredScenarios = scenarios.filter((scenario) => {
-    if (!searchTerm) return true;
+  // Define asset type order (by keyword matching)
+  const getAssetTypeOrder = (type: string | undefined): number => {
+    if (!type) return 999;
+    const lowerType = type.toLowerCase();
+    if (lowerType.includes('persona') || lowerType.includes('personal') || lowerType.includes('people')) return 1;
+    if (lowerType.includes('bien') || lowerType.includes('equipo') || lowerType.includes('goods') || lowerType.includes('asset')) return 2;
+    if (lowerType.includes('proceso') || lowerType.includes('process')) return 3;
+    if (lowerType.includes('información') || lowerType.includes('informacion') || lowerType.includes('dato') || lowerType.includes('information') || lowerType.includes('data')) return 4;
+    return 999; // Other types go last
+  };
 
-    const searchLower = searchTerm.toLowerCase();
-    const assetName = scenario.asset?.name?.toLowerCase() || '';
-    const threatName = scenario.threat?.name?.toLowerCase() || '';
+  // Filter and sort scenarios based on search term and asset type
+  const filteredScenarios = scenarios
+    .filter((scenario) => {
+      if (!searchTerm) return true;
 
-    return assetName.includes(searchLower) || threatName.includes(searchLower);
-  });
+      const searchLower = searchTerm.toLowerCase();
+      const assetName = scenario.asset?.name?.toLowerCase() || '';
+      const threatName = scenario.threat?.name?.toLowerCase() || '';
+
+      return assetName.includes(searchLower) || threatName.includes(searchLower);
+    })
+    .sort((a, b) => {
+      const orderA = getAssetTypeOrder(a.asset?.type);
+      const orderB = getAssetTypeOrder(b.asset?.type);
+      if (orderA !== orderB) return orderA - orderB;
+      // Secondary sort by asset name
+      const assetNameA = a.asset?.name || '';
+      const assetNameB = b.asset?.name || '';
+      return assetNameA.localeCompare(assetNameB);
+    });
 
   // Delete functions
   const openDeleteModal = (scenario: ScenarioWithDetails) => {

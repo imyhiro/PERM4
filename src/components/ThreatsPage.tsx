@@ -24,7 +24,7 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
   const [formData, setFormData] = useState({
     site_id: '',
     name: '',
-    category: 'natural' as 'natural' | 'technological' | 'human' | 'environmental',
+    category: 'natural' as 'natural' | 'technological' | 'social' | 'environmental',
     description: '',
     probability: 'medium' as 'high' | 'medium' | 'low',
     impact: 'medium' as 'high' | 'medium' | 'low',
@@ -267,7 +267,7 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
     const labels: Record<string, string> = {
       natural: 'Natural',
       technological: 'Tecnológico',
-      human: 'Humano',
+      social: 'Social',
       environmental: 'Ambiental',
     };
     return labels[category] || category;
@@ -305,12 +305,28 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
     return site?.name || 'Sitio no encontrado';
   };
 
-  const filteredThreats = threats.filter((threat) => {
-    const searchLower = searchTerm.toLowerCase();
-    const nameMatch = threat.name.toLowerCase().includes(searchLower);
-    const categoryMatch = getCategoryLabel(threat.category).toLowerCase().includes(searchLower);
-    return nameMatch || categoryMatch;
-  });
+  // Define category order
+  const categoryOrder: Record<string, number> = {
+    natural: 1,
+    technological: 2,
+    social: 3,
+    environmental: 4,
+  };
+
+  const filteredThreats = threats
+    .filter((threat) => {
+      const searchLower = searchTerm.toLowerCase();
+      const nameMatch = threat.name.toLowerCase().includes(searchLower);
+      const categoryMatch = getCategoryLabel(threat.category).toLowerCase().includes(searchLower);
+      return nameMatch || categoryMatch;
+    })
+    .sort((a, b) => {
+      const orderA = categoryOrder[a.category] || 999;
+      const orderB = categoryOrder[b.category] || 999;
+      if (orderA !== orderB) return orderA - orderB;
+      // Secondary sort by name
+      return a.name.localeCompare(b.name);
+    });
 
   if (loading) {
     return (
@@ -638,7 +654,7 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
                     >
                       <option value="natural">Natural</option>
                       <option value="technological">Tecnológico</option>
-                      <option value="human">Humano</option>
+                      <option value="social">Social</option>
                       <option value="environmental">Ambiental</option>
                     </select>
                   </div>
@@ -870,7 +886,7 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
                     >
                       <option value="natural">Natural</option>
                       <option value="technological">Tecnológico</option>
-                      <option value="human">Humano</option>
+                      <option value="social">Social</option>
                       <option value="environmental">Ambiental</option>
                     </select>
                   </div>

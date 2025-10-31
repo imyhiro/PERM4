@@ -273,13 +273,31 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
     return site?.name || 'Sitio no encontrado';
   };
 
-  const filteredAssets = assets.filter((asset) => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      asset.name.toLowerCase().includes(searchLower) ||
-      asset.type.toLowerCase().includes(searchLower)
-    );
-  });
+  // Define asset type order (by keyword matching)
+  const getAssetTypeOrder = (type: string): number => {
+    const lowerType = type.toLowerCase();
+    if (lowerType.includes('persona') || lowerType.includes('personal') || lowerType.includes('people')) return 1;
+    if (lowerType.includes('bien') || lowerType.includes('equipo') || lowerType.includes('goods') || lowerType.includes('asset')) return 2;
+    if (lowerType.includes('proceso') || lowerType.includes('process')) return 3;
+    if (lowerType.includes('información') || lowerType.includes('informacion') || lowerType.includes('dato') || lowerType.includes('information') || lowerType.includes('data')) return 4;
+    return 999; // Other types go last
+  };
+
+  const filteredAssets = assets
+    .filter((asset) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        asset.name.toLowerCase().includes(searchLower) ||
+        asset.type.toLowerCase().includes(searchLower)
+      );
+    })
+    .sort((a, b) => {
+      const orderA = getAssetTypeOrder(a.type);
+      const orderB = getAssetTypeOrder(b.type);
+      if (orderA !== orderB) return orderA - orderB;
+      // Secondary sort by name
+      return a.name.localeCompare(b.name);
+    });
 
   if (loading) {
     return (
