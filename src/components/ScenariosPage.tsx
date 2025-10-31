@@ -840,27 +840,22 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
 
                                     return (
                                       <div key={category}>
-                                        <div className="mb-2 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-500 border-l-4 border-blue-700 rounded shadow-sm">
-                                          <h5 className="text-xs font-bold text-white uppercase tracking-wider">{category}</h5>
-                                          <p className="text-xs text-blue-100 mt-0.5">{categoryAssets.length} activo{categoryAssets.length !== 1 ? 's' : ''}</p>
+                                        <div className="mb-2 px-3 py-1.5 bg-gradient-to-r from-blue-100 to-blue-50 border-l-4 border-blue-400 rounded">
+                                          <h5 className="text-xs font-bold text-blue-900 uppercase tracking-wider">{category}</h5>
+                                          <p className="text-xs text-blue-600 mt-0.5">{categoryAssets.length} activo{categoryAssets.length !== 1 ? 's' : ''}</p>
                                         </div>
                                         <div className="space-y-1.5">
                                           {categoryAssets.map(asset => {
                                             const scenariosCount = assetScenariosCount[asset.id] || 0;
                                             const hasScenarios = scenariosCount > 0;
 
-                                            // Determinar color del borde según valor
-                                            const valueBorderColor = asset.value === 'high' ? 'border-l-red-500' :
-                                                                     asset.value === 'medium' ? 'border-l-yellow-500' :
-                                                                     'border-l-green-500';
-
                                             return (
                                               <button
                                                 key={asset.id}
                                                 onClick={() => handleAssetSelection(asset)}
-                                                className={`w-full px-3 py-2.5 border-l-4 ${valueBorderColor} border border-r border-t border-b rounded-lg transition text-left relative group ${
+                                                className={`w-full px-3 py-2.5 border rounded-lg transition text-left relative group ${
                                                   hasScenarios
-                                                    ? 'border-green-300 bg-green-50 hover:bg-green-100'
+                                                    ? 'border-green-200 bg-green-50 hover:bg-green-100'
                                                     : 'border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300'
                                                 }`}
                                               >
@@ -880,7 +875,7 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
                                                     </div>
                                                   </div>
                                                   {hasScenarios && (
-                                                    <span className="flex-shrink-0 bg-green-600 text-white px-2 py-1 rounded-md text-xs font-bold shadow-sm">
+                                                    <span className="flex-shrink-0 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">
                                                       {scenariosCount} ✓
                                                     </span>
                                                   )}
@@ -902,27 +897,22 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
 
                                     return (
                                       <div key={category}>
-                                        <div className="mb-2 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-500 border-l-4 border-blue-700 rounded shadow-sm">
-                                          <h5 className="text-xs font-bold text-white uppercase tracking-wider">{category}</h5>
-                                          <p className="text-xs text-blue-100 mt-0.5">{categoryAssets.length} activo{categoryAssets.length !== 1 ? 's' : ''}</p>
+                                        <div className="mb-2 px-3 py-1.5 bg-gradient-to-r from-blue-100 to-blue-50 border-l-4 border-blue-400 rounded">
+                                          <h5 className="text-xs font-bold text-blue-900 uppercase tracking-wider">{category}</h5>
+                                          <p className="text-xs text-blue-600 mt-0.5">{categoryAssets.length} activo{categoryAssets.length !== 1 ? 's' : ''}</p>
                                         </div>
                                         <div className="space-y-1.5">
                                           {categoryAssets.map(asset => {
                                             const scenariosCount = assetScenariosCount[asset.id] || 0;
                                             const hasScenarios = scenariosCount > 0;
 
-                                            // Determinar color del borde según valor
-                                            const valueBorderColor = asset.value === 'high' ? 'border-l-red-500' :
-                                                                     asset.value === 'medium' ? 'border-l-yellow-500' :
-                                                                     'border-l-green-500';
-
                                             return (
                                               <button
                                                 key={asset.id}
                                                 onClick={() => handleAssetSelection(asset)}
-                                                className={`w-full px-3 py-2.5 border-l-4 ${valueBorderColor} border border-r border-t border-b rounded-lg transition text-left relative group ${
+                                                className={`w-full px-3 py-2.5 border rounded-lg transition text-left relative group ${
                                                   hasScenarios
-                                                    ? 'border-green-300 bg-green-50 hover:bg-green-100'
+                                                    ? 'border-green-200 bg-green-50 hover:bg-green-100'
                                                     : 'border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300'
                                                 }`}
                                               >
@@ -942,7 +932,7 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
                                                     </div>
                                                   </div>
                                                   {hasScenarios && (
-                                                    <span className="flex-shrink-0 bg-green-600 text-white px-2 py-1 rounded-md text-xs font-bold shadow-sm">
+                                                    <span className="flex-shrink-0 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">
                                                       {scenariosCount} ✓
                                                     </span>
                                                   )}
