@@ -487,9 +487,13 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {filteredAssets.map((asset) => (
-                <tr key={asset.id} className="hover:bg-slate-50 transition">
+                <tr
+                  key={asset.id}
+                  onClick={() => handleView(asset)}
+                  className="hover:bg-slate-50 transition cursor-pointer"
+                >
                   {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedAssets.has(asset.id)}
@@ -521,7 +525,7 @@ export function AssetsPage({ onBack }: { onBack: () => void }) {
                       {getStatusLabel(asset.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleView(asset)}

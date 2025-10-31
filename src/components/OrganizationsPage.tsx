@@ -380,9 +380,13 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
               {filteredOrganizations.map((org) => {
                 const licenseInfo = getLicenseInfo(org.license_type, org.license_limit);
                 return (
-                  <tr key={org.id} className="hover:bg-slate-50 transition">
+                  <tr
+                    key={org.id}
+                    onClick={() => (profile?.role === 'super_admin' || profile?.role === 'admin') && openEditModal(org)}
+                    className="hover:bg-slate-50 transition cursor-pointer"
+                  >
                     {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selectedOrgs.has(org.id)}
@@ -409,7 +413,7 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                       {new Date(org.created_at).toLocaleDateString()}
                     </td>
                     {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEditModal(org)}

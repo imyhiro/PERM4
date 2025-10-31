@@ -500,9 +500,13 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
                 {filteredUsers.map((user) => {
                   const roleInfo = getRoleInfo(user.role);
                   return (
-                    <tr key={user.id} className="hover:bg-slate-50 transition">
+                    <tr
+                      key={user.id}
+                      onClick={() => canManageUsers && openEditModal(user)}
+                      className="hover:bg-slate-50 transition cursor-pointer"
+                    >
                       {profile?.role === 'super_admin' && (
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={selectedUsers.has(user.id)}
@@ -532,7 +536,7 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
                         {new Date(user.created_at).toLocaleDateString()}
                       </td>
                       {canManageUsers && (
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => openEditModal(user)}

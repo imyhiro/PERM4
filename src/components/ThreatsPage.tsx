@@ -520,9 +520,13 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {filteredThreats.map((threat) => (
-                <tr key={threat.id} className="hover:bg-slate-50 transition">
+                <tr
+                  key={threat.id}
+                  onClick={() => handleView(threat)}
+                  className="hover:bg-slate-50 transition cursor-pointer"
+                >
                   {(profile?.role === 'super_admin' || profile?.role === 'admin' || profile?.role === 'consultant') && (
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedThreats.has(threat.id)}
@@ -556,7 +560,7 @@ export function ThreatsPage({ onBack }: { onBack: () => void }) {
                       {getStatusLabel(threat.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleView(threat)}

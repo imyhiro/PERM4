@@ -611,9 +611,13 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {filteredSites.map((site) => (
-                <tr key={site.id} className="hover:bg-slate-50 transition">
+                <tr
+                  key={site.id}
+                  onClick={() => handleView(site)}
+                  className="hover:bg-slate-50 transition cursor-pointer"
+                >
                   {(profile?.role === 'super_admin' || profile?.role === 'admin') && (
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedSites.has(site.id)}
@@ -642,7 +646,7 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleView(site)}
