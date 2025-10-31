@@ -87,37 +87,20 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
         scenariosQuery = scenariosQuery.in('site_id', siteIds);
       }
 
-      const scenariosResult = await scenariosQuery.order('created_at', { ascending: false });
+      // Load scenarios with assets and threats in a single query using JOIN
+      // Limit to 100 most recent scenarios for better performance
+      const scenariosResult = await scenariosQuery
+        .select(`
+          *,
+          asset:assets(*),
+          threat:threats(*)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
       if (scenariosResult.error) throw scenariosResult.error;
 
-      // Load asset and threat details for each scenario
-      const scenariosWithDetails = await Promise.all(
-        (scenariosResult.data || []).map(async (scenario) => {
-          const details: ScenarioWithDetails = { ...scenario };
-
-          if (scenario.asset_id) {
-            const { data: asset } = await supabase
-              .from('assets')
-              .select('*')
-              .eq('id', scenario.asset_id)
-              .single();
-            if (asset) details.asset = asset;
-          }
-
-          if (scenario.threat_id) {
-            const { data: threat } = await supabase
-              .from('threats')
-              .select('*')
-              .eq('id', scenario.threat_id)
-              .single();
-            if (threat) details.threat = threat;
-          }
-
-          return details;
-        })
-      );
-
-      setScenarios(scenariosWithDetails);
+      setScenarios(scenariosResult.data || []);
     } catch (err: any) {
       console.error('Error loading data:', err);
       setError(`Error cargando datos: ${err.message}`);
@@ -497,6 +480,17 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
           {error}
+        </div>
+      )}
+
+      {/* Info message about limit */}
+      {!loading && scenarios.length > 0 && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+          <FileText className="w-4 h-4 text-blue-600" />
+          <p className="text-sm text-blue-900">
+            Mostrando los {scenarios.length} escenarios más recientes
+            {scenarios.length >= 100 && ' (máximo 100)'}
+          </p>
         </div>
       )}
 

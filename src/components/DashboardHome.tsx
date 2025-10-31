@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { Building2, MapPin, Users, Shield, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Building2, MapPin, Users, Shield, AlertTriangle, TrendingUp, FileText } from 'lucide-react';
 
 interface DashboardHomeProps {
   onNavigate?: (page: string) => void;
@@ -17,6 +17,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
     users: 0,
     assets: 0,
     threats: 0,
+    scenarios: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -35,15 +36,17 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
       let usersQuery = supabase.from('users').select('id', { count: 'exact', head: true });
       let assetsQuery = supabase.from('assets').select('id', { count: 'exact', head: true });
       let threatsQuery = supabase.from('threats').select('id', { count: 'exact', head: true });
+      let scenariosQuery = supabase.from('scenarios').select('id', { count: 'exact', head: true });
 
       // Apply site filter first (most specific)
       if (selectedSiteId) {
         // Filter sites to just the selected one
         sitesQuery = sitesQuery.eq('id', selectedSiteId);
 
-        // Filter assets and threats by the selected site
+        // Filter assets, threats, and scenarios by the selected site
         assetsQuery = assetsQuery.eq('site_id', selectedSiteId);
         threatsQuery = threatsQuery.eq('site_id', selectedSiteId);
+        scenariosQuery = scenariosQuery.eq('site_id', selectedSiteId);
 
         // Get the organization of this site for proper filtering
         const { data: siteData } = await supabase
@@ -62,7 +65,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         sitesQuery = sitesQuery.eq('organization_id', selectedOrganizationId);
         usersQuery = usersQuery.eq('organization_id', selectedOrganizationId);
 
-        // For assets and threats, first get site IDs from this organization
+        // For assets, threats, and scenarios, get site IDs from this organization
         const { data: orgSites } = await supabase
           .from('sites')
           .select('id')
@@ -73,20 +76,23 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         if (siteIds.length > 0) {
           assetsQuery = assetsQuery.in('site_id', siteIds);
           threatsQuery = threatsQuery.in('site_id', siteIds);
+          scenariosQuery = scenariosQuery.in('site_id', siteIds);
         } else {
-          // No sites in this organization, so no assets/threats
-          assetsQuery = assetsQuery.eq('id', '00000000-0000-0000-0000-000000000000'); // Impossible match
-          threatsQuery = threatsQuery.eq('id', '00000000-0000-0000-0000-000000000000'); // Impossible match
+          // No sites in this organization, return 0 for all counts
+          assetsQuery = assetsQuery.limit(0);
+          threatsQuery = threatsQuery.limit(0);
+          scenariosQuery = scenariosQuery.limit(0);
         }
       }
 
       // Execute all queries in parallel
-      const [orgs, sites, users, assets, threats] = await Promise.all([
+      const [orgs, sites, users, assets, threats, scenarios] = await Promise.all([
         orgsQuery,
         sitesQuery,
         usersQuery,
         assetsQuery,
         threatsQuery,
+        scenariosQuery,
       ]);
 
       setStats({
@@ -95,6 +101,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         users: users.count || 0,
         assets: assets.count || 0,
         threats: threats.count || 0,
+        scenarios: scenarios.count || 0,
       });
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -154,6 +161,14 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         color: 'bg-red-500',
         bgColor: 'bg-red-50',
         page: 'threats',
+      },
+      {
+        label: 'Escenarios',
+        value: stats.scenarios,
+        icon: FileText,
+        color: 'bg-purple-500',
+        bgColor: 'bg-purple-50',
+        page: 'scenarios',
       }
     );
 
