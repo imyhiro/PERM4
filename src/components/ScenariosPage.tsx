@@ -840,27 +840,50 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
 
                                     return (
                                       <div key={category}>
-                                        <div className="mb-1.5 px-2 py-1 bg-gradient-to-r from-blue-50 to-transparent border-l-3 border-blue-500 rounded">
-                                          <h5 className="text-xs font-bold text-blue-900 uppercase tracking-wide">{category}</h5>
+                                        <div className="mb-2 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-500 border-l-4 border-blue-700 rounded shadow-sm">
+                                          <h5 className="text-xs font-bold text-white uppercase tracking-wider">{category}</h5>
                                         </div>
                                         <div className="space-y-1.5">
                                           {categoryAssets.map(asset => {
                                             const scenariosCount = assetScenariosCount[asset.id] || 0;
                                             const hasScenarios = scenariosCount > 0;
+
+                                            // Determinar color del borde según valor
+                                            const valueBorderColor = asset.value === 'high' ? 'border-l-red-500' :
+                                                                     asset.value === 'medium' ? 'border-l-yellow-500' :
+                                                                     'border-l-green-500';
+
                                             return (
                                               <button
                                                 key={asset.id}
                                                 onClick={() => handleAssetSelection(asset)}
-                                                className={`w-full px-3 py-2 border rounded-lg hover:border-blue-500 transition text-left relative flex items-center justify-between group ${
-                                                  hasScenarios ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:bg-blue-50'
+                                                className={`w-full px-3 py-2.5 border-l-4 ${valueBorderColor} border border-r border-t border-b rounded-lg transition text-left relative group ${
+                                                  hasScenarios
+                                                    ? 'border-green-300 bg-green-50 hover:bg-green-100'
+                                                    : 'border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300'
                                                 }`}
                                               >
-                                                <span className="font-medium text-gray-900 text-sm truncate pr-2">{asset.name}</span>
-                                                {hasScenarios && (
-                                                  <span className="flex-shrink-0 bg-blue-600 text-white px-1.5 py-0.5 rounded text-xs font-medium">
-                                                    {scenariosCount}
-                                                  </span>
-                                                )}
+                                                <div className="flex items-center justify-between gap-2">
+                                                  <div className="flex-1 min-w-0">
+                                                    <div className="font-medium text-gray-900 text-sm truncate">{asset.name}</div>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                      <span className="text-xs text-gray-500">{asset.type}</span>
+                                                      <span className="text-gray-300">•</span>
+                                                      <span className={`text-xs font-medium ${
+                                                        asset.value === 'high' ? 'text-red-600' :
+                                                        asset.value === 'medium' ? 'text-yellow-600' :
+                                                        'text-green-600'
+                                                      }`}>
+                                                        {asset.value === 'high' ? 'Alto' : asset.value === 'medium' ? 'Medio' : 'Bajo'}
+                                                      </span>
+                                                    </div>
+                                                  </div>
+                                                  {hasScenarios && (
+                                                    <span className="flex-shrink-0 bg-green-600 text-white px-2 py-1 rounded-md text-xs font-bold shadow-sm">
+                                                      {scenariosCount} ✓
+                                                    </span>
+                                                  )}
+                                                </div>
                                               </button>
                                             );
                                           })}
@@ -878,27 +901,50 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
 
                                     return (
                                       <div key={category}>
-                                        <div className="mb-1.5 px-2 py-1 bg-gradient-to-r from-blue-50 to-transparent border-l-3 border-blue-500 rounded">
-                                          <h5 className="text-xs font-bold text-blue-900 uppercase tracking-wide">{category}</h5>
+                                        <div className="mb-2 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-500 border-l-4 border-blue-700 rounded shadow-sm">
+                                          <h5 className="text-xs font-bold text-white uppercase tracking-wider">{category}</h5>
                                         </div>
                                         <div className="space-y-1.5">
                                           {categoryAssets.map(asset => {
                                             const scenariosCount = assetScenariosCount[asset.id] || 0;
                                             const hasScenarios = scenariosCount > 0;
+
+                                            // Determinar color del borde según valor
+                                            const valueBorderColor = asset.value === 'high' ? 'border-l-red-500' :
+                                                                     asset.value === 'medium' ? 'border-l-yellow-500' :
+                                                                     'border-l-green-500';
+
                                             return (
                                               <button
                                                 key={asset.id}
                                                 onClick={() => handleAssetSelection(asset)}
-                                                className={`w-full px-3 py-2 border rounded-lg hover:border-blue-500 transition text-left relative flex items-center justify-between group ${
-                                                  hasScenarios ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:bg-blue-50'
+                                                className={`w-full px-3 py-2.5 border-l-4 ${valueBorderColor} border border-r border-t border-b rounded-lg transition text-left relative group ${
+                                                  hasScenarios
+                                                    ? 'border-green-300 bg-green-50 hover:bg-green-100'
+                                                    : 'border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300'
                                                 }`}
                                               >
-                                                <span className="font-medium text-gray-900 text-sm truncate pr-2">{asset.name}</span>
-                                                {hasScenarios && (
-                                                  <span className="flex-shrink-0 bg-blue-600 text-white px-1.5 py-0.5 rounded text-xs font-medium">
-                                                    {scenariosCount}
-                                                  </span>
-                                                )}
+                                                <div className="flex items-center justify-between gap-2">
+                                                  <div className="flex-1 min-w-0">
+                                                    <div className="font-medium text-gray-900 text-sm truncate">{asset.name}</div>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                      <span className="text-xs text-gray-500">{asset.type}</span>
+                                                      <span className="text-gray-300">•</span>
+                                                      <span className={`text-xs font-medium ${
+                                                        asset.value === 'high' ? 'text-red-600' :
+                                                        asset.value === 'medium' ? 'text-yellow-600' :
+                                                        'text-green-600'
+                                                      }`}>
+                                                        {asset.value === 'high' ? 'Alto' : asset.value === 'medium' ? 'Medio' : 'Bajo'}
+                                                      </span>
+                                                    </div>
+                                                  </div>
+                                                  {hasScenarios && (
+                                                    <span className="flex-shrink-0 bg-green-600 text-white px-2 py-1 rounded-md text-xs font-bold shadow-sm">
+                                                      {scenariosCount} ✓
+                                                    </span>
+                                                  )}
+                                                </div>
                                               </button>
                                             );
                                           })}
