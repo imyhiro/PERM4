@@ -706,7 +706,7 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
       {/* Manual Creation Modal - Wizard */}
       {creationMode === 'manual' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
               <div className="flex justify-between items-center mb-4">
@@ -831,19 +831,19 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
                             const rightCategories = ['Procesos', 'Información'];
 
                             return (
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-2 gap-6">
                                 {/* Left Column */}
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                   {leftCategories.map(category => {
                                     const categoryAssets = groupedAssets[category];
                                     if (categoryAssets.length === 0) return null;
 
                                     return (
                                       <div key={category}>
-                                        <div className="mb-2 px-2 py-1 bg-gray-100 border-l-4 border-blue-500 rounded">
-                                          <h5 className="text-xs font-bold text-gray-700 uppercase tracking-wide">{category}</h5>
+                                        <div className="mb-1.5 px-2 py-1 bg-gradient-to-r from-blue-50 to-transparent border-l-3 border-blue-500 rounded">
+                                          <h5 className="text-xs font-bold text-blue-900 uppercase tracking-wide">{category}</h5>
                                         </div>
-                                        <div className="space-y-2">
+                                        <div className="space-y-1.5">
                                           {categoryAssets.map(asset => {
                                             const scenariosCount = assetScenariosCount[asset.id] || 0;
                                             const hasScenarios = scenariosCount > 0;
@@ -851,26 +851,16 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
                                               <button
                                                 key={asset.id}
                                                 onClick={() => handleAssetSelection(asset)}
-                                                className={`w-full p-3 border-2 rounded-lg hover:border-blue-500 transition text-left relative ${
+                                                className={`w-full px-3 py-2 border rounded-lg hover:border-blue-500 transition text-left relative flex items-center justify-between group ${
                                                   hasScenarios ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:bg-blue-50'
                                                 }`}
                                               >
+                                                <span className="font-medium text-gray-900 text-sm truncate pr-2">{asset.name}</span>
                                                 {hasScenarios && (
-                                                  <div className="absolute top-2 right-2 flex items-center gap-1 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-medium">
-                                                    <FileText className="w-3 h-3" />
-                                                    <span>{scenariosCount}</span>
-                                                  </div>
-                                                )}
-                                                <div className="flex flex-col gap-1">
-                                                  <div className="font-medium text-gray-900 text-sm pr-12">{asset.name}</div>
-                                                  <span className={`self-start px-2 py-0.5 text-xs rounded ${
-                                                    asset.value === 'high' ? 'bg-red-100 text-red-800' :
-                                                    asset.value === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                    'bg-green-100 text-green-800'
-                                                  }`}>
-                                                    Valor: {asset.value === 'high' ? 'Alto' : asset.value === 'medium' ? 'Medio' : 'Bajo'}
+                                                  <span className="flex-shrink-0 bg-blue-600 text-white px-1.5 py-0.5 rounded text-xs font-medium">
+                                                    {scenariosCount}
                                                   </span>
-                                                </div>
+                                                )}
                                               </button>
                                             );
                                           })}
@@ -881,17 +871,17 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
                                 </div>
 
                                 {/* Right Column */}
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                   {rightCategories.map(category => {
                                     const categoryAssets = groupedAssets[category];
                                     if (categoryAssets.length === 0) return null;
 
                                     return (
                                       <div key={category}>
-                                        <div className="mb-2 px-2 py-1 bg-gray-100 border-l-4 border-blue-500 rounded">
-                                          <h5 className="text-xs font-bold text-gray-700 uppercase tracking-wide">{category}</h5>
+                                        <div className="mb-1.5 px-2 py-1 bg-gradient-to-r from-blue-50 to-transparent border-l-3 border-blue-500 rounded">
+                                          <h5 className="text-xs font-bold text-blue-900 uppercase tracking-wide">{category}</h5>
                                         </div>
-                                        <div className="space-y-2">
+                                        <div className="space-y-1.5">
                                           {categoryAssets.map(asset => {
                                             const scenariosCount = assetScenariosCount[asset.id] || 0;
                                             const hasScenarios = scenariosCount > 0;
@@ -899,26 +889,16 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
                                               <button
                                                 key={asset.id}
                                                 onClick={() => handleAssetSelection(asset)}
-                                                className={`w-full p-3 border-2 rounded-lg hover:border-blue-500 transition text-left relative ${
+                                                className={`w-full px-3 py-2 border rounded-lg hover:border-blue-500 transition text-left relative flex items-center justify-between group ${
                                                   hasScenarios ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:bg-blue-50'
                                                 }`}
                                               >
+                                                <span className="font-medium text-gray-900 text-sm truncate pr-2">{asset.name}</span>
                                                 {hasScenarios && (
-                                                  <div className="absolute top-2 right-2 flex items-center gap-1 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-medium">
-                                                    <FileText className="w-3 h-3" />
-                                                    <span>{scenariosCount}</span>
-                                                  </div>
-                                                )}
-                                                <div className="flex flex-col gap-1">
-                                                  <div className="font-medium text-gray-900 text-sm pr-12">{asset.name}</div>
-                                                  <span className={`self-start px-2 py-0.5 text-xs rounded ${
-                                                    asset.value === 'high' ? 'bg-red-100 text-red-800' :
-                                                    asset.value === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                    'bg-green-100 text-green-800'
-                                                  }`}>
-                                                    Valor: {asset.value === 'high' ? 'Alto' : asset.value === 'medium' ? 'Medio' : 'Bajo'}
+                                                  <span className="flex-shrink-0 bg-blue-600 text-white px-1.5 py-0.5 rounded text-xs font-medium">
+                                                    {scenariosCount}
                                                   </span>
-                                                </div>
+                                                )}
                                               </button>
                                             );
                                           })}
