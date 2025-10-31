@@ -89,18 +89,32 @@ export function ScenariosPage({ onBack }: { onBack: () => void }) {
 
       // Load scenarios with assets and threats in a single query using JOIN
       // Limit to 100 most recent scenarios for better performance
-      const scenariosResult = await scenariosQuery
-        .select(`
-          *,
-          asset:assets(*),
-          threat:threats(*)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(100);
+      try {
+        const scenariosResult = await scenariosQuery
+          .select(`
+            *,
+            asset:assets(*),
+            threat:threats(*)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(100);
 
-      if (scenariosResult.error) throw scenariosResult.error;
-
-      setScenarios(scenariosResult.data || []);
+        if (scenariosResult.error) {
+          // If error is about missing columns, show helpful message
+          if (scenariosResult.error.message?.includes('column') || scenariosResult.error.message?.includes('does not exist')) {
+            setError('Por favor, aplica las migraciones de base de datos en Supabase Dashboard. Consulta supabase/migrations/');
+            setScenarios([]);
+          } else {
+            throw scenariosResult.error;
+          }
+        } else {
+          setScenarios(scenariosResult.data || []);
+        }
+      } catch (queryError: any) {
+        console.error('Error loading scenarios:', queryError);
+        setError(`Error cargando escenarios: ${queryError.message}. Verifica que las migraciones estén aplicadas.`);
+        setScenarios([]);
+      }
     } catch (err: any) {
       console.error('Error loading data:', err);
       setError(`Error cargando datos: ${err.message}`);

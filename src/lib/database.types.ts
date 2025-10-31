@@ -263,13 +263,16 @@ export interface Database {
         Row: {
           id: string
           site_id: string
-          site_asset_id: string
+          site_asset_id: string | null
+          asset_id: string | null
           threat_id: string
           scenario_description: string
           vulnerabilities: string
           facilitators: string
           risk_factors: string
           suggested_measures: string
+          status: 'pending' | 'in_evaluation' | 'evaluated'
+          created_by: string | null
           analyzed_by: string | null
           analyzed_at: string | null
           created_at: string
@@ -278,13 +281,16 @@ export interface Database {
         Insert: {
           id?: string
           site_id: string
-          site_asset_id: string
+          site_asset_id?: string | null
+          asset_id?: string | null
           threat_id: string
           scenario_description?: string
           vulnerabilities?: string
           facilitators?: string
           risk_factors?: string
           suggested_measures?: string
+          status?: 'pending' | 'in_evaluation' | 'evaluated'
+          created_by?: string | null
           analyzed_by?: string | null
           analyzed_at?: string | null
           created_at?: string
@@ -293,13 +299,16 @@ export interface Database {
         Update: {
           id?: string
           site_id?: string
-          site_asset_id?: string
+          site_asset_id?: string | null
+          asset_id?: string | null
           threat_id?: string
           scenario_description?: string
           vulnerabilities?: string
           facilitators?: string
           risk_factors?: string
           suggested_measures?: string
+          status?: 'pending' | 'in_evaluation' | 'evaluated'
+          created_by?: string | null
           analyzed_by?: string | null
           analyzed_at?: string | null
           created_at?: string

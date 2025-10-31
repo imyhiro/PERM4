@@ -36,6 +36,8 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
       let usersQuery = supabase.from('users').select('id', { count: 'exact', head: true });
       let assetsQuery = supabase.from('assets').select('id', { count: 'exact', head: true });
       let threatsQuery = supabase.from('threats').select('id', { count: 'exact', head: true });
+
+      // Scenarios query - handle gracefully if table structure is not yet updated
       let scenariosQuery = supabase.from('scenarios').select('id', { count: 'exact', head: true });
 
       // Apply site filter first (most specific)
@@ -85,15 +87,23 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         }
       }
 
-      // Execute all queries in parallel
-      const [orgs, sites, users, assets, threats, scenarios] = await Promise.all([
+      // Execute all queries in parallel, but handle scenarios separately as it may fail if migrations not applied
+      const [orgs, sites, users, assets, threats] = await Promise.all([
         orgsQuery,
         sitesQuery,
         usersQuery,
         assetsQuery,
         threatsQuery,
-        scenariosQuery,
       ]);
+
+      // Try to get scenarios count, but don't fail if table structure is outdated
+      let scenariosCount = 0;
+      try {
+        const scenarios = await scenariosQuery;
+        scenariosCount = scenarios.count || 0;
+      } catch (scenariosError) {
+        console.warn('Could not load scenarios count. Migrations may not be applied yet.', scenariosError);
+      }
 
       setStats({
         organizations: orgs.count || 0,
@@ -101,7 +111,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         users: users.count || 0,
         assets: assets.count || 0,
         threats: threats.count || 0,
-        scenarios: scenarios.count || 0,
+        scenarios: scenariosCount,
       });
     } catch (error) {
       console.error('Error loading stats:', error);
