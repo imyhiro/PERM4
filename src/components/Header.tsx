@@ -4,6 +4,7 @@ import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
 import { ChevronDown, LogOut, User, RefreshCw, Shield, Settings, Briefcase, Eye, Sparkles, Zap, Crown, Camera, MessageSquare } from 'lucide-react';
 import { AvatarUpload } from './AvatarUpload';
+import { FeedbackModal } from './FeedbackModal';
 import type { Database } from '../lib/database.types';
 
 type Organization = Database['public']['Tables']['organizations']['Row'];
@@ -17,6 +18,7 @@ export function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showAvatarUpload, setShowAvatarUpload] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(profile?.avatar_url || null);
 
   // Reset selectors when user changes (logout/login)
@@ -220,7 +222,7 @@ export function Header() {
         <div className="flex items-center gap-4">
           {/* Botón de Feedback */}
           <button
-            onClick={() => {/* TODO: Abrir formulario de feedback */}}
+            onClick={() => setShowFeedbackModal(true)}
             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
           >
             <MessageSquare className="w-4 h-4" />
@@ -328,6 +330,11 @@ export function Header() {
           onAvatarUpdated={handleAvatarUpdated}
           onClose={() => setShowAvatarUpload(false)}
         />
+      )}
+
+      {/* Modal de feedback */}
+      {showFeedbackModal && (
+        <FeedbackModal onClose={() => setShowFeedbackModal(false)} />
       )}
     </header>
   );

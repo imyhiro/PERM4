@@ -82,6 +82,53 @@ export interface Database {
           updated_at?: string
         }
       }
+      feedback: {
+        Row: {
+          id: string
+          user_id: string | null
+          user_email: string
+          user_name: string | null
+          feedback_type: 'issue' | 'idea'
+          description: string
+          rating: number | null
+          user_agent: string | null
+          page_url: string | null
+          status: 'pending' | 'reviewing' | 'resolved' | 'archived'
+          admin_notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          user_email: string
+          user_name?: string | null
+          feedback_type: 'issue' | 'idea'
+          description: string
+          rating?: number | null
+          user_agent?: string | null
+          page_url?: string | null
+          status?: 'pending' | 'reviewing' | 'resolved' | 'archived'
+          admin_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          user_email?: string
+          user_name?: string | null
+          feedback_type?: 'issue' | 'idea'
+          description?: string
+          rating?: number | null
+          user_agent?: string | null
+          page_url?: string | null
+          status?: 'pending' | 'reviewing' | 'resolved' | 'archived'
+          admin_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       sites: {
         Row: {
           id: string
