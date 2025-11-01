@@ -59,6 +59,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (error) throw error;
+
+      console.log('✅ Profile loaded:', data);
+      console.log('📊 License info:', {
+        license_type: data?.license_type,
+        site_limit: data?.site_limit,
+        org_limit: data?.org_limit
+      });
+
       setProfile(data);
     } catch (error) {
       console.error('Error loading profile:', error);

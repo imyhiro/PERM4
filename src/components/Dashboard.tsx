@@ -68,6 +68,14 @@ export function Dashboard() {
     }
   };
 
+  // Debug log
+  console.log('🔍 Dashboard render - Profile:', {
+    has_profile: !!profile,
+    license_type: profile?.license_type,
+    site_limit: profile?.site_limit,
+    org_limit: profile?.org_limit
+  });
+
   return (
     <div className="min-h-screen bg-slate-50">
       <nav className="bg-white shadow-sm border-b border-slate-200">
@@ -84,12 +92,14 @@ export function Dashboard() {
               <div className="text-right">
                 <p className="text-sm font-medium text-slate-900">{profile?.full_name}</p>
                 <p className="text-xs text-slate-500">{profile?.email}</p>
-                {profile?.license_type && (
+                {profile?.license_type ? (
                   <p className="text-xs text-blue-600 font-medium">
                     Plan: {profile.license_type.toUpperCase()}
-                    {profile.site_limit && ` • ${profile.site_limit} sitios`}
-                    {!profile.site_limit && profile.license_type === 'promax' && ' • ∞ sitios'}
+                    {profile.site_limit ? ` • ${profile.site_limit} sitios` : ''}
+                    {!profile.site_limit && profile.license_type === 'promax' ? ' • ∞ sitios' : ''}
                   </p>
+                ) : (
+                  <p className="text-xs text-red-600 font-medium">Sin licencia</p>
                 )}
               </div>
               <span

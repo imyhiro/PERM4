@@ -1,7 +1,7 @@
 # 🚀 ESTADO DE MIGRACIÓN - SISTEMA DE LICENCIAS
 
 **Fecha de inicio:** 2025-01-01
-**Última actualización:** FASE 1 COMPLETADA ✅
+**Última actualización:** FASE 1 COMPLETADA + FIX ✅
 
 ---
 
@@ -19,6 +19,12 @@
 
 **Commit:** 8830c0b
 **Pushed:** ✓ main -> origin/main
+
+#### **FIX POST-FASE 1:** Mostrar licencia en Header ✅
+- [x] 1.9 Corregir visualización de licencia en Header.tsx (no en Dashboard.tsx)
+- **Problema:** La info de licencia no se mostraba porque Header.tsx renderizaba el perfil
+- **Solución:** Agregado display de licencia en Header.tsx:168-180
+- **Resultado:** Ahora muestra "Plan: FREE • 3 sitios" correctamente
 
 ### **FASE 2: UI de Upgrade** ⏸️ PENDIENTE
 - [ ] 2.1 Crear componente UpgradePlanModal

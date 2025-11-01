@@ -168,6 +168,15 @@ export function Header() {
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">{profile?.full_name}</p>
               <p className="text-xs text-gray-500 capitalize">{profile?.role}</p>
+              {profile?.license_type ? (
+                <p className="text-xs text-blue-600 font-medium">
+                  Plan: {profile.license_type.toUpperCase()}
+                  {profile.site_limit ? ` • ${profile.site_limit} sitios` : ''}
+                  {!profile.site_limit && profile.license_type === 'promax' ? ' • ∞ sitios' : ''}
+                </p>
+              ) : (
+                <p className="text-xs text-red-600 font-medium">Sin licencia</p>
+              )}
             </div>
             <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
               <User className="w-4 h-4 text-white" />
