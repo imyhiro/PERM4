@@ -36,6 +36,7 @@ export interface Database {
           full_name: string
           role: 'super_admin' | 'admin' | 'consultant' | 'reader'
           organization_id: string | null
+          avatar_url: string | null
           license_type: 'free' | 'pro' | 'promax'
           site_limit: number | null
           org_limit: number | null
@@ -52,6 +53,7 @@ export interface Database {
           full_name: string
           role: 'super_admin' | 'admin' | 'consultant' | 'reader'
           organization_id?: string | null
+          avatar_url?: string | null
           license_type?: 'free' | 'pro' | 'promax'
           site_limit?: number | null
           org_limit?: number | null
@@ -68,6 +70,7 @@ export interface Database {
           full_name?: string
           role?: 'super_admin' | 'admin' | 'consultant' | 'reader'
           organization_id?: string | null
+          avatar_url?: string | null
           license_type?: 'free' | 'pro' | 'promax'
           site_limit?: number | null
           org_limit?: number | null

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { ChevronDown, LogOut, User, RefreshCw } from 'lucide-react';
+import { ChevronDown, LogOut, User, RefreshCw, Shield, Settings, Briefcase, Eye, Sparkles, Zap, Crown, Camera } from 'lucide-react';
+import { AvatarUpload } from './AvatarUpload';
 import type { Database } from '../lib/database.types';
 
 type Organization = Database['public']['Tables']['organizations']['Row'];
@@ -15,6 +16,8 @@ export function Header() {
   const [sites, setSites] = useState<Site[]>([]);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showAvatarUpload, setShowAvatarUpload] = useState(false);
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(profile?.avatar_url || null);
 
   // Reset selectors when user changes (logout/login)
   useEffect(() => {
@@ -22,6 +25,11 @@ export function Header() {
     setSelectedSiteId(null);
     loadOrganizations();
   }, [profile?.id]); // Trigger when user ID changes (including null)
+
+  // Sync avatar URL when profile changes
+  useEffect(() => {
+    setCurrentAvatarUrl(profile?.avatar_url || null);
+  }, [profile?.avatar_url]);
 
   useEffect(() => {
     loadSites(selectedOrganizationId);
@@ -90,6 +98,12 @@ export function Header() {
     }
   };
 
+  const handleAvatarUpdated = (newUrl: string) => {
+    setCurrentAvatarUrl(newUrl || null);
+    // Recargar perfil para sincronizar
+    window.location.reload();
+  };
+
   const handleSignOut = async () => {
     await signOut();
     setShowUserMenu(false);
@@ -118,6 +132,49 @@ export function Header() {
 
   const selectedOrganization = organizations.find(org => org.id === selectedOrganizationId);
   const selectedSite = sites.find(site => site.id === selectedSiteId);
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'super_admin':
+        return <Shield className="w-3 h-3" />;
+      case 'admin':
+        return <Settings className="w-3 h-3" />;
+      case 'consultant':
+        return <Briefcase className="w-3 h-3" />;
+      case 'reader':
+        return <Eye className="w-3 h-3" />;
+      default:
+        return null;
+    }
+  };
+
+  const getPlanIcon = (licenseType: string) => {
+    switch (licenseType) {
+      case 'free':
+        return <Sparkles className="w-3 h-3" />;
+      case 'pro':
+        return <Zap className="w-3 h-3" />;
+      case 'promax':
+        return <Crown className="w-3 h-3" />;
+      default:
+        return null;
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'super_admin':
+        return 'Super Admin';
+      case 'admin':
+        return 'Administrador';
+      case 'consultant':
+        return 'Consultor';
+      case 'reader':
+        return 'Lector';
+      default:
+        return role;
+    }
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-3.5">
@@ -167,24 +224,54 @@ export function Header() {
           >
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">{profile?.full_name}</p>
-              <p className="text-xs text-gray-500 capitalize">{profile?.role}</p>
+              <div className="flex items-center justify-end gap-1 mt-0.5">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-slate-100 to-slate-50 text-slate-700 text-xs font-medium shadow-sm border border-slate-200">
+                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white shadow-sm">
+                    {getRoleIcon(profile?.role || '')}
+                  </span>
+                  {getRoleLabel(profile?.role || '')}
+                </span>
+              </div>
               {profile?.license_type ? (
-                <p className="text-xs text-blue-600 font-medium">
-                  Plan: {profile.license_type.toUpperCase()}
-                  {profile.site_limit ? ` • ${profile.site_limit} sitios` : ''}
-                  {!profile.site_limit && profile.license_type === 'promax' ? ' • ∞ sitios' : ''}
-                </p>
+                <div className="flex items-center justify-end gap-1 mt-1">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 text-xs font-medium shadow-sm border border-blue-200">
+                    <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white shadow-sm">
+                      {getPlanIcon(profile.license_type)}
+                    </span>
+                    Plan {profile.license_type.toUpperCase()}
+                    {profile.site_limit ? ` • ${profile.site_limit} sitios` : ''}
+                    {!profile.site_limit && profile.license_type === 'promax' ? ' • ∞ sitios' : ''}
+                  </span>
+                </div>
               ) : (
-                <p className="text-xs text-red-600 font-medium">Sin licencia</p>
+                <p className="text-xs text-red-600 font-medium mt-1">Sin licencia</p>
               )}
             </div>
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-white" />
-            </div>
+            {currentAvatarUrl ? (
+              <img
+                src={currentAvatarUrl}
+                alt={profile?.full_name}
+                className="w-9 h-9 rounded-full object-cover border-2 border-blue-600 shadow-md"
+              />
+            ) : (
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-md">
+                <User className="w-5 h-5 text-white" />
+              </div>
+            )}
           </button>
 
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+              <button
+                onClick={() => {
+                  setShowAvatarUpload(true);
+                  setShowUserMenu(false);
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <Camera className="w-4 h-4" />
+                Cambiar foto de perfil
+              </button>
               <button
                 onClick={handleRefreshSession}
                 disabled={refreshing}
@@ -204,6 +291,16 @@ export function Header() {
           )}
         </div>
       </div>
+
+      {/* Modal de subir avatar */}
+      {showAvatarUpload && profile && (
+        <AvatarUpload
+          userId={profile.id}
+          currentAvatarUrl={currentAvatarUrl}
+          onAvatarUpdated={handleAvatarUpdated}
+          onClose={() => setShowAvatarUpload(false)}
+        />
+      )}
     </header>
   );
 }
