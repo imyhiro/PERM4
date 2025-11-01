@@ -44,6 +44,7 @@ export interface Database {
           payment_frequency: 'monthly' | 'annual' | null
           subscription_start_date: string | null
           subscription_end_date: string | null
+          dismissed_welcome: boolean
           created_at: string
           updated_at: string
         }
@@ -61,6 +62,7 @@ export interface Database {
           payment_frequency?: 'monthly' | 'annual' | null
           subscription_start_date?: string | null
           subscription_end_date?: string | null
+          dismissed_welcome?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -78,6 +80,7 @@ export interface Database {
           payment_frequency?: 'monthly' | 'annual' | null
           subscription_start_date?: string | null
           subscription_end_date?: string | null
+          dismissed_welcome?: boolean
           created_at?: string
           updated_at?: string
         }

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { ChevronDown, LogOut, User, RefreshCw, Shield, Settings, Briefcase, Eye, Sparkles, Zap, Crown, Camera, MessageSquare, AlertTriangle, Lightbulb } from 'lucide-react';
 import { AvatarUpload } from './AvatarUpload';
 import { FeedbackModal } from './FeedbackModal';
+import { WelcomeModal } from './WelcomeModal';
 import type { Database } from '../lib/database.types';
 
 type Organization = Database['public']['Tables']['organizations']['Row'];
@@ -18,6 +19,7 @@ export function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showAvatarUpload, setShowAvatarUpload] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(profile?.avatar_url || null);
 
   // Reset selectors when user changes (logout/login)
@@ -35,6 +37,13 @@ export function Header() {
   useEffect(() => {
     loadSites(selectedOrganizationId);
   }, [selectedOrganizationId]);
+
+  // Check if should show welcome modal
+  useEffect(() => {
+    if (profile && !profile.dismissed_welcome) {
+      setShowWelcomeModal(true);
+    }
+  }, [profile?.dismissed_welcome]);
 
   const loadOrganizations = async () => {
     if (!profile) {
@@ -330,6 +339,15 @@ export function Header() {
           currentAvatarUrl={currentAvatarUrl}
           onAvatarUpdated={handleAvatarUpdated}
           onClose={() => setShowAvatarUpload(false)}
+        />
+      )}
+
+      {/* Modal de bienvenida */}
+      {showWelcomeModal && profile && (
+        <WelcomeModal
+          userId={profile.id}
+          userName={profile.full_name}
+          onClose={() => setShowWelcomeModal(false)}
         />
       )}
     </header>
