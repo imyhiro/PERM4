@@ -16,11 +16,9 @@ export function Header() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showFeedbackMenu, setShowFeedbackMenu] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showAvatarUpload, setShowAvatarUpload] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [feedbackType, setFeedbackType] = useState<'issue' | 'idea' | null>(null);
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(profile?.avatar_url || null);
 
   // Reset selectors when user changes (logout/login)
@@ -106,17 +104,6 @@ export function Header() {
     setCurrentAvatarUrl(newUrl || null);
     // Recargar perfil para sincronizar
     window.location.reload();
-  };
-
-  const handleOpenFeedback = (type: 'issue' | 'idea') => {
-    setFeedbackType(type);
-    setShowFeedbackMenu(false);
-    setShowFeedbackModal(true);
-  };
-
-  const handleCloseFeedback = () => {
-    setShowFeedbackModal(false);
-    setFeedbackType(null);
   };
 
   const handleSignOut = async () => {
@@ -233,47 +220,14 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Botón de Feedback con menú desplegable */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFeedbackMenu(!showFeedbackMenu)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-            >
-              <MessageSquare className="w-4 h-4" />
-              Feedback
-            </button>
-
-            {showFeedbackMenu && (
-              <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
-                <div className="py-1">
-                  <button
-                    onClick={() => handleOpenFeedback('issue')}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-red-50 transition"
-                  >
-                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <AlertTriangle className="w-5 h-5 text-red-600" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-gray-900">Problema</p>
-                      <p className="text-xs text-gray-500">Reportar un error</p>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => handleOpenFeedback('idea')}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 transition"
-                  >
-                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Lightbulb className="w-5 h-5 text-orange-600" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-gray-900">Idea</p>
-                      <p className="text-xs text-gray-500">Sugerir mejora</p>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Botón de Feedback */}
+          <button
+            onClick={() => setShowFeedbackModal(true)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+          >
+            <MessageSquare className="w-4 h-4" />
+            Feedback
+          </button>
 
           {/* Botón de perfil con logos circulares */}
           <div className="relative">
@@ -379,11 +333,8 @@ export function Header() {
       )}
 
       {/* Modal de feedback */}
-      {showFeedbackModal && feedbackType && (
-        <FeedbackModal
-          initialType={feedbackType}
-          onClose={handleCloseFeedback}
-        />
+      {showFeedbackModal && (
+        <FeedbackModal onClose={() => setShowFeedbackModal(false)} />
       )}
     </header>
   );
