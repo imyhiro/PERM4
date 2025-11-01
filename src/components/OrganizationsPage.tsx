@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
 import { Building2, Plus, X, Users, Check, Edit2, LayoutGrid, List, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { UpgradePlanModal } from './UpgradePlanModal';
 import type { Database } from '../lib/database.types';
 
 type Organization = Database['public']['Tables']['organizations']['Row'];
@@ -15,6 +16,7 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
   const [deletingOrg, setDeletingOrg] = useState<Organization | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
@@ -67,7 +69,10 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
           .eq('created_by', profile.id);
 
         if (count && count >= profile.org_limit) {
-          throw new Error(`Plan FREE permite solo ${profile.org_limit} organización. Actualiza a PRO para crear más.`);
+          setShowCreateModal(false);
+          setShowUpgradeModal(true);
+          setSubmitting(false);
+          return;
         }
       }
 
@@ -717,6 +722,15 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de upgrade de plan */}
+      {showUpgradeModal && (
+        <UpgradePlanModal
+          limitType="organizations"
+          currentLimit={profile?.org_limit || 1}
+          onClose={() => setShowUpgradeModal(false)}
+        />
       )}
     </div>
   );

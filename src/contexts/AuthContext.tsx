@@ -80,23 +80,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
       });
 
       if (error) return { error };
       if (!data.user) return { error: new Error('No user returned') as AuthError };
 
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert({
-          id: data.user.id,
-          email,
-          full_name: fullName,
-          role: 'consultant',
-        });
-
-      if (profileError) {
-        return { error: profileError as unknown as AuthError };
-      }
+      console.log('Usuario registrado con rol admin (trigger automático):', { id: data.user.id, email, fullName });
 
       return { error: null };
     } catch (error) {

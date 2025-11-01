@@ -10,9 +10,47 @@
 
 ## 🚀 Para activar el sistema:
 
-### 1. Aplicar migración SQL en Supabase
+### 1. Aplicar migraciones SQL en Supabase
 
 Ve a **Supabase Dashboard → SQL Editor** y ejecuta:
+
+#### a) Cambiar rol por defecto a 'admin'
+
+```sql
+-- Actualizar función para crear perfil de usuario automáticamente
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+DECLARE
+  user_count integer;
+  default_role text;
+BEGIN
+  -- Contar cuántos usuarios existen
+  SELECT COUNT(*) INTO user_count FROM public.users;
+
+  -- Si es el primer usuario, hacerlo super_admin
+  IF user_count = 0 THEN
+    default_role := 'super_admin';
+  ELSE
+    -- Nuevos usuarios son 'admin' con limitantes de plan FREE
+    default_role := 'admin';
+  END IF;
+
+  -- Crear el perfil del usuario
+  INSERT INTO public.users (id, email, full_name, role, organization_id)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+    default_role,
+    NULL
+  );
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+#### b) Agregar campo para modal de bienvenida
 
 ```sql
 -- Agregar campo para controlar si el usuario ya vio el mensaje de bienvenida

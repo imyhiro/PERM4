@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
 import { MapPin, Plus, X, Building2, Eye, Edit2, LayoutGrid, List, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { UpgradePlanModal } from './UpgradePlanModal';
 import type { Database } from '../lib/database.types';
 
 type Site = Database['public']['Tables']['sites']['Row'];
@@ -18,6 +19,7 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [deletingSite, setDeletingSite] = useState<Site | null>(null);
   const [selectedSite, setSelectedSite] = useState<Site | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
@@ -119,9 +121,10 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
         if (countError) throw countError;
 
         if (count && count >= profile.site_limit) {
-          const planName = profile.license_type === 'free' ? 'FREE' : 'PRO';
-          const nextPlan = profile.license_type === 'free' ? 'PRO (10 sitios)' : 'PRO MAX (ilimitados)';
-          throw new Error(`Has alcanzado el límite de ${profile.site_limit} sitios de tu plan ${planName}. Actualiza a ${nextPlan} para crear más sitios.`);
+          setShowCreateModal(false);
+          setShowUpgradeModal(true);
+          setSubmitting(false);
+          return;
         }
       }
 
@@ -1514,6 +1517,15 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de upgrade de plan */}
+      {showUpgradeModal && (
+        <UpgradePlanModal
+          limitType="sites"
+          currentLimit={profile?.site_limit || 3}
+          onClose={() => setShowUpgradeModal(false)}
+        />
       )}
     </div>
   );
