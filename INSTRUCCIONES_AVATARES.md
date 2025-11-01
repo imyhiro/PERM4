@@ -88,14 +88,28 @@ Una vez aplicadas las migraciones, los usuarios podrán:
    - ⚡ Zap para plan PRO
    - 👑 Crown para plan PROMAX
 
-2. **Subir foto de perfil**:
+2. **Elegir avatar predeterminado** (¡NUEVO!):
    - Hacer clic en su avatar o nombre
    - Seleccionar "Cambiar foto de perfil"
+   - Ir a la pestaña "Elegir avatar"
+   - Escoger entre 5 estilos diferentes:
+     - Aventureros
+     - Caricaturas
+     - Sonrisas
+     - Robots
+     - Personas
+   - Seleccionar de 24 avatares diferentes por estilo
+   - Total: 120 opciones únicas (hombres, mujeres, diversos estilos)
+
+3. **Subir foto de perfil**:
+   - Hacer clic en su avatar o nombre
+   - Seleccionar "Cambiar foto de perfil"
+   - Ir a la pestaña "Subir foto"
    - Elegir una imagen (JPG, PNG, etc. - máx 2MB)
    - Ver preview en tiempo real
    - Confirmar o cancelar
 
-3. **Eliminar foto de perfil**:
+4. **Eliminar foto de perfil**:
    - Abrir el modal de avatar
    - Hacer clic en "Eliminar foto"
    - Volver al avatar por defecto (icono genérico)
@@ -128,9 +142,24 @@ Una vez que ejecutes los 2 scripts SQL:
 1. Recarga la aplicación
 2. Haz clic en tu nombre/avatar en la esquina superior derecha
 3. Verás la opción "Cambiar foto de perfil"
-4. ¡Sube tu primera foto!
+4. Se abrirá un modal con 2 pestañas:
+   - **"Elegir avatar"**: Galería con 120 avatares predeterminados
+   - **"Subir foto"**: Sube tu propia imagen
+5. ¡Elige tu avatar favorito o sube tu foto!
+
+## 🎭 Sobre la galería de avatares:
+
+La galería usa **DiceBear API** (gratuita) que genera avatares SVG únicos:
+- **120 avatares diferentes** (24 personas × 5 estilos)
+- **Sin almacenamiento**: Se usan URLs externas
+- **Diversos**: Hombres, mujeres, y estilos neutros
+- **Personalizables**: 5 estilos diferentes para elegir
+- **Colores pastel**: Fondos azules suaves y armoniosos
 
 ---
 
-**Commit:** 23381f6
+**Commits:**
+- 23381f6 - Sistema de avatares base
+- 46d53b1 - Instrucciones de instalación
+- d0ec5cd - Galería de avatares predeterminados
 **Fecha:** 2025-01-01
