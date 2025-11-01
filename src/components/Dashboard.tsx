@@ -84,6 +84,13 @@ export function Dashboard() {
               <div className="text-right">
                 <p className="text-sm font-medium text-slate-900">{profile?.full_name}</p>
                 <p className="text-xs text-slate-500">{profile?.email}</p>
+                {profile?.license_type && (
+                  <p className="text-xs text-blue-600 font-medium">
+                    Plan: {profile.license_type.toUpperCase()}
+                    {profile.site_limit && ` • ${profile.site_limit} sitios`}
+                    {!profile.site_limit && profile.license_type === 'promax' && ' • ∞ sitios'}
+                  </p>
+                )}
               </div>
               <span
                 className={`px-3 py-1 rounded-full text-xs font-semibold border ${getRoleColor(profile?.role || '')}`}

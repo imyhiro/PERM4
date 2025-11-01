@@ -20,7 +20,6 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [formData, setFormData] = useState({
     name: '',
-    license_type: 'free' as 'free' | 'pro',
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -60,18 +59,26 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
     setSubmitting(true);
 
     try {
-      const licenseLimit = formData.license_type === 'free' ? 3 : 10;
+      // Check org limit based on user's license
+      if (profile?.license_type === 'free' && profile?.org_limit) {
+        const { count } = await supabase
+          .from('organizations')
+          .select('*', { count: 'exact', head: true })
+          .eq('created_by', profile.id);
+
+        if (count && count >= profile.org_limit) {
+          throw new Error(`Plan FREE permite solo ${profile.org_limit} organización. Actualiza a PRO para crear más.`);
+        }
+      }
 
       const { error } = await supabase.from('organizations').insert({
         name: formData.name,
-        license_type: formData.license_type,
-        license_limit: licenseLimit,
         created_by: profile?.id,
       });
 
       if (error) throw error;
 
-      setFormData({ name: '', license_type: 'free' });
+      setFormData({ name: '' });
       setShowCreateModal(false);
       loadOrganizations();
     } catch (err: any) {
@@ -89,14 +96,10 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
     setSubmitting(true);
 
     try {
-      const licenseLimit = formData.license_type === 'free' ? 3 : 10;
-
       const { error } = await supabase
         .from('organizations')
         .update({
           name: formData.name,
-          license_type: formData.license_type,
-          license_limit: licenseLimit,
         })
         .eq('id', editingOrg.id);
 
@@ -104,7 +107,7 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
 
       setShowEditModal(false);
       setEditingOrg(null);
-      setFormData({ name: '', license_type: 'free' });
+      setFormData({ name: '' });
       loadOrganizations();
     } catch (err: any) {
       setError(err.message || 'Error al actualizar la organización');
@@ -117,7 +120,6 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
     setEditingOrg(org);
     setFormData({
       name: org.name,
-      license_type: org.license_type as 'free' | 'pro',
     });
     setError('');
     setShowEditModal(true);
@@ -184,14 +186,6 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
             aVal = a.name.toLowerCase();
             bVal = b.name.toLowerCase();
             break;
-          case 'license':
-            aVal = a.license_type.toLowerCase();
-            bVal = b.license_type.toLowerCase();
-            break;
-          case 'limit':
-            aVal = a.license_limit || 0;
-            bVal = b.license_limit || 0;
-            break;
           case 'created':
             aVal = new Date(a.created_at).getTime();
             bVal = new Date(b.created_at).getTime();
@@ -251,13 +245,6 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
     }
   };
 
-  const getLicenseInfo = (license: string, limit: number) => {
-    return {
-      label: license === 'free' ? 'Gratis' : 'Pro',
-      color: license === 'free' ? 'bg-slate-100 text-slate-700' : 'bg-blue-100 text-blue-700',
-      limit: `${limit} análisis`,
-    };
-  };
 
   if (loading) {
     return (
@@ -358,7 +345,6 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredOrganizations.map((org) => {
-            const licenseInfo = getLicenseInfo(org.license_type, org.license_limit);
             return (
               <div
                 key={org.id}
@@ -368,12 +354,8 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <Building2 className="w-6 h-6 text-blue-600" />
                   </div>
-                  <span className={`px-2 py-1 rounded-md text-xs font-semibold ${licenseInfo.color}`}>
-                    {licenseInfo.label}
-                  </span>
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">{org.name}</h3>
-                <p className="text-sm text-slate-600 mb-4">{licenseInfo.limit}</p>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center text-xs text-slate-500">
                     <Users className="w-4 h-4 mr-1" />
@@ -425,18 +407,6 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                 </th>
                 <th
                   className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
-                  onClick={() => handleSort('license')}
-                >
-                  <div className="flex items-center">Licencia {getSortIcon('license')}</div>
-                </th>
-                <th
-                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
-                  onClick={() => handleSort('limit')}
-                >
-                  <div className="flex items-center">Límite de sitios {getSortIcon('limit')}</div>
-                </th>
-                <th
-                  className="text-left px-6 py-3 text-xs font-semibold text-slate-600 uppercase cursor-pointer hover:bg-slate-100 transition"
                   onClick={() => handleSort('created')}
                 >
                   <div className="flex items-center">Creado {getSortIcon('created')}</div>
@@ -448,7 +418,6 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {filteredOrganizations.map((org) => {
-                const licenseInfo = getLicenseInfo(org.license_type, org.license_limit);
                 return (
                   <tr
                     key={org.id}
@@ -473,12 +442,6 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                         <span className="font-medium text-slate-900">{org.name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-md text-xs font-semibold ${licenseInfo.color}`}>
-                        {licenseInfo.label}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600">{licenseInfo.limit}</td>
                     <td className="px-6 py-4 text-slate-600">
                       {new Date(org.created_at).toLocaleDateString()}
                     </td>
@@ -543,57 +506,6 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3">Tipo de Licencia</label>
-                <div className="space-y-3">
-                  <label className="flex items-start p-4 border-2 border-slate-200 rounded-lg cursor-pointer hover:border-blue-500 transition">
-                    <input
-                      type="radio"
-                      name="license"
-                      value="free"
-                      checked={formData.license_type === 'free'}
-                      onChange={() => setFormData({ ...formData, license_type: 'free' })}
-                      className="mt-1 mr-3"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-slate-900">Gratis</span>
-                        <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
-                          Básico
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600">Hasta 3 análisis de riesgo</p>
-                    </div>
-                    {formData.license_type === 'free' && (
-                      <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    )}
-                  </label>
-
-                  <label className="flex items-start p-4 border-2 border-slate-200 rounded-lg cursor-pointer hover:border-blue-500 transition">
-                    <input
-                      type="radio"
-                      name="license"
-                      value="pro"
-                      checked={formData.license_type === 'pro'}
-                      onChange={() => setFormData({ ...formData, license_type: 'pro' })}
-                      className="mt-1 mr-3"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-slate-900">Pro</span>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                          Avanzado
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600">Hasta 10 análisis de riesgo</p>
-                    </div>
-                    {formData.license_type === 'pro' && (
-                      <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    )}
-                  </label>
-                </div>
-              </div>
-
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                   {error}
@@ -606,7 +518,7 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                   onClick={() => {
                     setShowCreateModal(false);
                     setError('');
-                    setFormData({ name: '', license_type: 'free' });
+                    setFormData({ name: '' });
                   }}
                   className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
                 >
@@ -635,7 +547,7 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                   setShowEditModal(false);
                   setEditingOrg(null);
                   setError('');
-                  setFormData({ name: '', license_type: 'free' });
+                  setFormData({ name: '' });
                 }}
                 className="p-2 hover:bg-slate-100 rounded-lg transition"
               >
@@ -659,57 +571,6 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3">Tipo de Licencia</label>
-                <div className="space-y-3">
-                  <label className="flex items-start p-4 border-2 border-slate-200 rounded-lg cursor-pointer hover:border-blue-500 transition">
-                    <input
-                      type="radio"
-                      name="edit_license"
-                      value="free"
-                      checked={formData.license_type === 'free'}
-                      onChange={() => setFormData({ ...formData, license_type: 'free' })}
-                      className="mt-1 mr-3"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-slate-900">Gratis</span>
-                        <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
-                          Básico
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600">Hasta 3 análisis de riesgo</p>
-                    </div>
-                    {formData.license_type === 'free' && (
-                      <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    )}
-                  </label>
-
-                  <label className="flex items-start p-4 border-2 border-slate-200 rounded-lg cursor-pointer hover:border-blue-500 transition">
-                    <input
-                      type="radio"
-                      name="edit_license"
-                      value="pro"
-                      checked={formData.license_type === 'pro'}
-                      onChange={() => setFormData({ ...formData, license_type: 'pro' })}
-                      className="mt-1 mr-3"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-slate-900">Pro</span>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                          Avanzado
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600">Hasta 10 análisis de riesgo</p>
-                    </div>
-                    {formData.license_type === 'pro' && (
-                      <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    )}
-                  </label>
-                </div>
-              </div>
-
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                   {error}
@@ -723,7 +584,7 @@ export function OrganizationsPage({ onBack }: { onBack: () => void }) {
                     setShowEditModal(false);
                     setEditingOrg(null);
                     setError('');
-                    setFormData({ name: '', license_type: 'free' });
+                    setFormData({ name: '' });
                   }}
                   className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
                 >

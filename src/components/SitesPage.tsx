@@ -108,6 +108,23 @@ export function SitesPage({ onBack }: { onBack: () => void }) {
     try {
       if (!profile?.id) throw new Error('Usuario no autenticado');
 
+      // Check site limit based on user's license (only if not promax)
+      if (profile.license_type !== 'promax' && profile.site_limit) {
+        // Count all sites across all user's organizations
+        const { count, error: countError } = await supabase
+          .from('sites')
+          .select('*', { count: 'exact', head: true })
+          .eq('created_by', profile.id);
+
+        if (countError) throw countError;
+
+        if (count && count >= profile.site_limit) {
+          const planName = profile.license_type === 'free' ? 'FREE' : 'PRO';
+          const nextPlan = profile.license_type === 'free' ? 'PRO (10 sitios)' : 'PRO MAX (ilimitados)';
+          throw new Error(`Has alcanzado el límite de ${profile.site_limit} sitios de tu plan ${planName}. Actualiza a ${nextPlan} para crear más sitios.`);
+        }
+      }
+
       // Step 1: Create the site and get its ID
       setSetupProgress('Creando sitio...');
       const { data: newSite, error: insertError } = await supabase

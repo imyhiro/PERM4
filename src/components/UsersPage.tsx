@@ -44,6 +44,8 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
     loadData();
   }, [selectedOrganizationId, selectedSiteId]);
 
+  const [userStats, setUserStats] = useState<Record<string, { orgs: number; sites: number }>>({});
+
   const loadData = async () => {
     try {
       // Build queries with filters
@@ -96,6 +98,20 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
         setUsers([]);
       } else {
         setUsers(usersRes.data || []);
+
+        // Load stats for each user (orgs and sites count)
+        const stats: Record<string, { orgs: number; sites: number }> = {};
+        for (const user of usersRes.data || []) {
+          const [orgsCount, sitesCount] = await Promise.all([
+            supabase.from('organizations').select('*', { count: 'exact', head: true }).eq('created_by', user.id),
+            supabase.from('sites').select('*', { count: 'exact', head: true }).eq('created_by', user.id),
+          ]);
+          stats[user.id] = {
+            orgs: orgsCount.count || 0,
+            sites: sitesCount.count || 0,
+          };
+        }
+        setUserStats(stats);
       }
 
       if (orgsRes.error) {
@@ -543,6 +559,15 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
                   >
                     <div className="flex items-center">Rol {getSortIcon('role')}</div>
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Licencia
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Orgs
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Sitios
+                  </th>
                   <th
                     className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition"
                     onClick={() => handleSort('organization')}
@@ -591,6 +616,25 @@ export function UsersPage({ onBack }: { onBack: () => void }) {
                         <span className={`px-2 py-1 rounded-md text-xs font-semibold ${roleInfo.color}`}>
                           {roleInfo.label}
                         </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
+                          user.license_type === 'promax' ? 'bg-purple-100 text-purple-800' :
+                          user.license_type === 'pro' ? 'bg-blue-100 text-blue-800' :
+                          'bg-slate-100 text-slate-800'
+                        }`}>
+                          {user.license_type?.toUpperCase() || 'FREE'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-700">
+                        {userStats[user.id]?.orgs || 0}
+                        {user.org_limit && ` / ${user.org_limit}`}
+                        {user.license_type !== 'free' && !user.org_limit && ' / ∞'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-700">
+                        {userStats[user.id]?.sites || 0}
+                        {user.site_limit && ` / ${user.site_limit}`}
+                        {user.license_type === 'promax' && !user.site_limit && ' / ∞'}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center text-sm text-slate-700">

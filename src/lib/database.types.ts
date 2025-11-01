@@ -13,24 +13,18 @@ export interface Database {
         Row: {
           id: string
           name: string
-          license_type: 'free' | 'pro'
-          license_limit: number
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           name: string
-          license_type?: 'free' | 'pro'
-          license_limit?: number
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           name?: string
-          license_type?: 'free' | 'pro'
-          license_limit?: number
           created_at?: string
           updated_at?: string
         }
@@ -42,6 +36,13 @@ export interface Database {
           full_name: string
           role: 'super_admin' | 'admin' | 'consultant' | 'reader'
           organization_id: string | null
+          license_type: 'free' | 'pro' | 'promax'
+          site_limit: number | null
+          org_limit: number | null
+          license_status: 'active' | 'expired' | 'cancelled'
+          payment_frequency: 'monthly' | 'annual' | null
+          subscription_start_date: string | null
+          subscription_end_date: string | null
           created_at: string
           updated_at: string
         }
@@ -51,6 +52,13 @@ export interface Database {
           full_name: string
           role: 'super_admin' | 'admin' | 'consultant' | 'reader'
           organization_id?: string | null
+          license_type?: 'free' | 'pro' | 'promax'
+          site_limit?: number | null
+          org_limit?: number | null
+          license_status?: 'active' | 'expired' | 'cancelled'
+          payment_frequency?: 'monthly' | 'annual' | null
+          subscription_start_date?: string | null
+          subscription_end_date?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -60,6 +68,13 @@ export interface Database {
           full_name?: string
           role?: 'super_admin' | 'admin' | 'consultant' | 'reader'
           organization_id?: string | null
+          license_type?: 'free' | 'pro' | 'promax'
+          site_limit?: number | null
+          org_limit?: number | null
+          license_status?: 'active' | 'expired' | 'cancelled'
+          payment_frequency?: 'monthly' | 'annual' | null
+          subscription_start_date?: string | null
+          subscription_end_date?: string | null
           created_at?: string
           updated_at?: string
         }
