@@ -4,14 +4,12 @@ import { X, AlertTriangle, Lightbulb, Send, Loader2, Star } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface FeedbackModalProps {
+  initialType: 'issue' | 'idea';
   onClose: () => void;
 }
 
-type FeedbackType = 'issue' | 'idea' | null;
-
-export function FeedbackModal({ onClose }: FeedbackModalProps) {
+export function FeedbackModal({ initialType, onClose }: FeedbackModalProps) {
   const { profile } = useAuth();
-  const [selectedType, setSelectedType] = useState<FeedbackType>(null);
   const [description, setDescription] = useState('');
   const [rating, setRating] = useState<number>(0);
   const [hoveredRating, setHoveredRating] = useState<number>(0);
@@ -21,7 +19,7 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!description.trim() || !selectedType) {
+    if (!description.trim()) {
       alert('Por favor completa todos los campos requeridos');
       return;
     }
@@ -33,7 +31,7 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
         user_id: profile?.id,
         user_email: profile?.email,
         user_name: profile?.full_name,
-        feedback_type: selectedType,
+        feedback_type: initialType,
         description: description.trim(),
         rating: rating || null,
         user_agent: navigator.userAgent,
@@ -56,12 +54,6 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
     }
   };
 
-  const handleBack = () => {
-    setSelectedType(null);
-    setDescription('');
-    setRating(0);
-  };
-
   if (submitted) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -80,7 +72,7 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">Feedback</h2>
@@ -95,54 +87,17 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {!selectedType ? (
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-6">
-                ¿Qué te gustaría compartir?
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Issue Card */}
-                <button
-                  onClick={() => setSelectedType('issue')}
-                  className="group relative p-6 border-2 border-gray-200 rounded-xl hover:border-red-300 hover:bg-red-50/50 transition-all text-center"
-                >
-                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-red-200 transition">
-                    <AlertTriangle className="w-8 h-8 text-red-600" />
-                  </div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Problema</h4>
-                  <p className="text-sm text-gray-600">
-                    Reportar un error o problema con la plataforma
-                  </p>
-                </button>
-
-                {/* Idea Card */}
-                <button
-                  onClick={() => setSelectedType('idea')}
-                  className="group relative p-6 border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50/50 transition-all text-center"
-                >
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition">
-                    <Lightbulb className="w-8 h-8 text-orange-600" />
-                  </div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Idea</h4>
-                  <p className="text-sm text-gray-600">
-                    Sugerir una mejora o nueva funcionalidad
-                  </p>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
               {/* Selected Type Header */}
               <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
                 <div
                   className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    selectedType === 'issue'
+                    initialType === 'issue'
                       ? 'bg-red-100 text-red-600'
                       : 'bg-orange-100 text-orange-600'
                   }`}
                 >
-                  {selectedType === 'issue' ? (
+                  {initialType === 'issue' ? (
                     <AlertTriangle className="w-6 h-6" />
                   ) : (
                     <Lightbulb className="w-6 h-6" />
@@ -150,10 +105,10 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">
-                    {selectedType === 'issue' ? 'Reportar Problema' : 'Compartir Idea'}
+                    {initialType === 'issue' ? 'Reportar Problema' : 'Compartir Idea'}
                   </h4>
                   <p className="text-sm text-gray-600">
-                    {selectedType === 'issue'
+                    {initialType === 'issue'
                       ? 'Describe el problema que encontraste'
                       : 'Cuéntanos tu idea para mejorar'}
                   </p>
@@ -171,7 +126,7 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
                   rows={6}
                   required
                   placeholder={
-                    selectedType === 'issue'
+                    initialType === 'issue'
                       ? 'Describe el problema que experimentaste...'
                       : 'Comparte tu idea o sugerencia...'
                   }
@@ -224,14 +179,6 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
               {/* Actions */}
               <div className="flex items-center gap-3 pt-4">
                 <button
-                  type="button"
-                  onClick={handleBack}
-                  disabled={submitting}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition disabled:cursor-not-allowed"
-                >
-                  Atrás
-                </button>
-                <button
                   type="submit"
                   disabled={submitting || !description.trim()}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition font-medium"
@@ -250,7 +197,6 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
                 </button>
               </div>
             </form>
-          )}
         </div>
       </div>
     </div>
