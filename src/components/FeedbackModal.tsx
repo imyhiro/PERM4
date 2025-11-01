@@ -87,7 +87,7 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
       />
 
       {/* Dropdown del feedback */}
-      <div className="absolute left-0 mt-2 w-[600px] bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+      <div className="absolute right-0 mt-2 w-[500px] bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
         {!selectedType ? (
           <>
             {/* Header */}
