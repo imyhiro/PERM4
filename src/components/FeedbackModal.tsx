@@ -79,113 +79,122 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Feedback</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition"
-            disabled={submitting}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <>
+      {/* Overlay para cerrar al hacer click fuera */}
+      <div
+        className="fixed inset-0 z-40"
+        onClick={onClose}
+      />
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {!selectedType ? (
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-6">
-                ¿Qué te gustaría compartir?
-              </h3>
+      {/* Dropdown del feedback */}
+      <div className="absolute left-0 mt-2 w-[600px] bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+        {!selectedType ? (
+          <>
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-sm font-semibold text-gray-900">¿Qué te gustaría compartir?</h3>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
+            {/* Opciones horizontales */}
+            <div className="p-3">
+              <div className="grid grid-cols-2 gap-3">
                 {/* Issue Card - Izquierda */}
                 <button
                   onClick={() => setSelectedType('issue')}
-                  className="group relative p-8 border-2 border-gray-200 rounded-xl hover:border-red-300 hover:bg-red-50/50 transition-all text-center"
+                  className="group relative p-4 border-2 border-gray-200 rounded-lg hover:border-red-300 hover:bg-red-50/50 transition-all text-center"
                 >
-                  <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-red-200 transition">
-                    <AlertTriangle className="w-10 h-10 text-red-600" />
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-red-200 transition">
+                    <AlertTriangle className="w-6 h-6 text-red-600" />
                   </div>
-                  <h4 className="text-xl font-semibold text-gray-900 mb-2">Problema</h4>
-                  <p className="text-sm text-gray-600">
-                    Reportar un error o problema con la plataforma
+                  <h4 className="text-sm font-semibold text-gray-900 mb-1">Problema</h4>
+                  <p className="text-xs text-gray-600">
+                    Reportar un error
                   </p>
                 </button>
 
                 {/* Idea Card - Derecha */}
                 <button
                   onClick={() => setSelectedType('idea')}
-                  className="group relative p-8 border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50/50 transition-all text-center"
+                  className="group relative p-4 border-2 border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50/50 transition-all text-center"
                 >
-                  <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-200 transition">
-                    <Lightbulb className="w-10 h-10 text-orange-600" />
+                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-orange-200 transition">
+                    <Lightbulb className="w-6 h-6 text-orange-600" />
                   </div>
-                  <h4 className="text-xl font-semibold text-gray-900 mb-2">Idea</h4>
-                  <p className="text-sm text-gray-600">
-                    Sugerir una mejora o nueva funcionalidad
+                  <h4 className="text-sm font-semibold text-gray-900 mb-1">Idea</h4>
+                  <p className="text-xs text-gray-600">
+                    Sugerir mejora
                   </p>
                 </button>
               </div>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Selected Type Header */}
-              <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+          </>
+        ) : (
+          <>
+            {/* Header con tipo seleccionado */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center gap-2">
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
                     selectedType === 'issue'
                       ? 'bg-red-100 text-red-600'
                       : 'bg-orange-100 text-orange-600'
                   }`}
                 >
                   {selectedType === 'issue' ? (
-                    <AlertTriangle className="w-6 h-6" />
+                    <AlertTriangle className="w-4 h-4" />
                   ) : (
-                    <Lightbulb className="w-6 h-6" />
+                    <Lightbulb className="w-4 h-4" />
                   )}
                 </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">
-                    {selectedType === 'issue' ? 'Reportar Problema' : 'Compartir Idea'}
-                  </h4>
-                  <p className="text-sm text-gray-600">
-                    {selectedType === 'issue'
-                      ? 'Describe el problema que encontraste'
-                      : 'Cuéntanos tu idea para mejorar'}
-                  </p>
-                </div>
+                <h3 className="text-sm font-semibold text-gray-900">
+                  {selectedType === 'issue' ? 'Reportar Problema' : 'Compartir Idea'}
+                </h3>
               </div>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition"
+                disabled={submitting}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Formulario */}
+            <div className="p-4 max-h-[500px] overflow-y-auto">
+              <form onSubmit={handleSubmit} className="space-y-4">
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
                   Descripción <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  rows={6}
+                  rows={4}
                   required
                   placeholder={
                     selectedType === 'issue'
                       ? 'Describe el problema que experimentaste...'
                       : 'Comparte tu idea o sugerencia...'
                   }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   disabled={submitting}
                 />
               </div>
 
               {/* Rating (opcional) */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
                   Calificación (opcional)
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
@@ -197,7 +206,7 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
                       disabled={submitting}
                     >
                       <Star
-                        className={`w-8 h-8 ${
+                        className={`w-5 h-5 ${
                           star <= (hoveredRating || rating)
                             ? 'fill-yellow-400 text-yellow-400'
                             : 'text-gray-300'
@@ -205,54 +214,42 @@ export function FeedbackModal({ onClose }: FeedbackModalProps) {
                       />
                     </button>
                   ))}
-                  {rating > 0 && (
-                    <span className="text-sm text-gray-600 ml-2">
-                      {rating} de 5 estrellas
-                    </span>
-                  )}
                 </div>
               </div>
 
-              {/* Info adicional */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-xs text-gray-600">
-                  <strong>Nota:</strong> Tu feedback se enviará con tu información de usuario
-                  ({profile?.email}) para que podamos dar seguimiento si es necesario.
-                </p>
-              </div>
-
               {/* Actions */}
-              <div className="flex items-center gap-3 pt-4">
+              <div className="flex items-center gap-2 pt-2">
                 <button
                   type="button"
                   onClick={handleBack}
                   disabled={submitting}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition disabled:cursor-not-allowed"
                 >
                   Atrás
                 </button>
                 <button
                   type="submit"
                   disabled={submitting || !description.trim()}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition font-medium"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition font-medium"
                 >
                   {submitting ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       Enviando...
                     </>
                   ) : (
                     <>
-                      <Send className="w-5 h-5" />
-                      Enviar Feedback
+                      <Send className="w-4 h-4" />
+                      Enviar
                     </>
                   )}
                 </button>
               </div>
-            </form>
-          )}
-        </div>
+              </form>
+            </div>
+          </>
+        )}
       </div>
-    </div>
+    </>
   );
 }

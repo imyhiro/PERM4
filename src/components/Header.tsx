@@ -220,14 +220,21 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Botón de Feedback */}
-          <button
-            onClick={() => setShowFeedbackModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-          >
-            <MessageSquare className="w-4 h-4" />
-            Feedback
-          </button>
+          {/* Botón de Feedback con modal dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowFeedbackModal(!showFeedbackModal)}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              <MessageSquare className="w-4 h-4" />
+              Feedback
+            </button>
+
+            {/* Modal de feedback como dropdown */}
+            {showFeedbackModal && (
+              <FeedbackModal onClose={() => setShowFeedbackModal(false)} />
+            )}
+          </div>
 
           {/* Botón de perfil con logos circulares */}
           <div className="relative">
@@ -330,11 +337,6 @@ export function Header() {
           onAvatarUpdated={handleAvatarUpdated}
           onClose={() => setShowAvatarUpload(false)}
         />
-      )}
-
-      {/* Modal de feedback */}
-      {showFeedbackModal && (
-        <FeedbackModal onClose={() => setShowFeedbackModal(false)} />
       )}
     </header>
   );
