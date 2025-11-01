@@ -113,8 +113,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
+    try {
+      // Limpiar TODAS las claves de Supabase en localStorage
+      const keysToRemove = Object.keys(localStorage).filter(key =>
+        key.startsWith('sb-') || key.includes('supabase')
+      );
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
+      // Intentar hacer logout en el servidor (scope: global para invalidar en todos lados)
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (error) {
+      console.error('Error durante signOut en servidor:', error);
+      // Continuar con logout local aunque falle el servidor
+    } finally {
+      // Siempre limpiar el estado local
+      setProfile(null);
+      setUser(null);
+      setSession(null);
+      // Recargar la página para asegurar limpieza total
+      window.location.href = '/';
+    }
   };
 
   return (

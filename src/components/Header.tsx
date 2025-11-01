@@ -40,7 +40,8 @@ export function Header() {
 
   // Check if should show welcome modal
   useEffect(() => {
-    if (profile && !profile.dismissed_welcome) {
+    // Solo mostrar si el campo existe y es false (no undefined)
+    if (profile && profile.dismissed_welcome === false) {
       setShowWelcomeModal(true);
     }
   }, [profile?.dismissed_welcome]);
@@ -117,27 +118,6 @@ export function Header() {
   const handleSignOut = async () => {
     await signOut();
     setShowUserMenu(false);
-  };
-
-  const handleRefreshSession = async () => {
-    setRefreshing(true);
-    try {
-      const { error } = await supabase.auth.refreshSession();
-      if (error) {
-        console.error('Error refreshing session:', error);
-        alert('Error al refrescar sesión. Por favor cierra sesión e inicia sesión nuevamente.');
-      } else {
-        console.log('Session refreshed successfully');
-        // Reload organizations after refresh
-        await loadOrganizations();
-        alert('Sesión actualizada. Si no ves las organizaciones, cierra sesión e inicia sesión nuevamente.');
-      }
-    } catch (error) {
-      console.error('Error refreshing session:', error);
-      alert('Error al refrescar sesión. Por favor cierra sesión e inicia sesión nuevamente.');
-    } finally {
-      setRefreshing(false);
-    }
   };
 
   const selectedOrganization = organizations.find(org => org.id === selectedOrganizationId);
