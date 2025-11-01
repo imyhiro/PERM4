@@ -37,22 +37,22 @@ export function WelcomeModal({ userId, userName, onClose }: WelcomeModalProps) {
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in duration-300">
         {/* Header con gradiente */}
-        <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-8 py-10 text-white">
+        <div className="relative bg-gradient-to-r from-slate-50 via-slate-100 to-blue-50 px-8 py-10 border-b-2 border-slate-200">
           <button
             onClick={handleClose}
             disabled={closing}
-            className="absolute top-4 right-4 text-white/80 hover:text-white transition"
+            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"
           >
             <X className="w-6 h-6" />
           </button>
 
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
               <Sparkles className="w-8 h-8 text-yellow-300" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">¡Bienvenido, {userName}!</h1>
-              <p className="text-blue-100 text-sm mt-1">Plataforma ERM 4.0</p>
+              <h1 className="text-3xl font-bold text-gray-800">¡Bienvenido, {userName}!</h1>
+              <p className="text-slate-600 text-sm mt-1">Plataforma ERM 4.0</p>
             </div>
           </div>
         </div>
