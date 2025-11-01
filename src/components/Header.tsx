@@ -16,7 +16,6 @@ export function Header() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [showAvatarUpload, setShowAvatarUpload] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(profile?.avatar_url || null);
@@ -276,8 +275,11 @@ export function Header() {
 
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
-              {/* Header del menú con info del usuario */}
-              <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white">
+              {/* Header del menú con info del usuario - Click para cerrar */}
+              <button
+                onClick={() => setShowUserMenu(false)}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white text-left hover:from-blue-700 hover:to-blue-800 transition"
+              >
                 <p className="font-semibold text-sm">{profile?.full_name}</p>
                 <p className="text-xs opacity-90">{profile?.email}</p>
                 <div className="flex items-center gap-2 mt-2">
@@ -292,7 +294,7 @@ export function Header() {
                     </span>
                   )}
                 </div>
-              </div>
+              </button>
 
               {/* Opciones del menú */}
               <div className="py-1">
@@ -305,14 +307,6 @@ export function Header() {
                 >
                   <Camera className="w-4 h-4" />
                   Cambiar foto de perfil
-                </button>
-                <button
-                  onClick={handleRefreshSession}
-                  disabled={refreshing}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                  {refreshing ? 'Actualizando...' : 'Refrescar sesión'}
                 </button>
                 <hr className="my-1 border-gray-200" />
                 <button
