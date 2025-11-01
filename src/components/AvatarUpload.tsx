@@ -11,22 +11,20 @@ interface AvatarUploadProps {
 
 type TabType = 'upload' | 'choose';
 
-// Pool de avatares predeterminados usando DiceBear API
+// Pool de avatares predeterminados usando DiceBear API - Solo profesionistas
 const AVATAR_STYLES = [
-  { style: 'adventurer', label: 'Aventureros' },
-  { style: 'avataaars', label: 'Caricaturas' },
-  { style: 'big-smile', label: 'Sonrisas' },
-  { style: 'bottts', label: 'Robots' },
-  { style: 'personas', label: 'Personas' },
+  { style: 'notionists', label: 'Consultores Modernos' },
+  { style: 'personas', label: 'Profesionistas' },
+  { style: 'adventurer', label: 'Ejecutivos' },
 ];
 
 const AVATAR_SEEDS = [
-  // Hombres con diferentes estilos
-  'John', 'Michael', 'David', 'James', 'Robert', 'Carlos', 'Diego', 'Luis',
-  // Mujeres con diferentes estilos
-  'Sarah', 'Emma', 'Olivia', 'Sophia', 'Isabella', 'Maria', 'Ana', 'Laura',
-  // Neutros/Diversos
-  'Alex', 'Jordan', 'Taylor', 'Casey', 'Morgan', 'Jamie', 'Riley', 'Avery',
+  // Consultores hombres
+  'Alejandro', 'Roberto', 'Fernando', 'Eduardo', 'Carlos', 'Miguel', 'Jorge', 'Daniel',
+  'Ricardo', 'Francisco', 'Antonio', 'José',
+  // Consultoras mujeres
+  'María', 'Ana', 'Laura', 'Patricia', 'Carmen', 'Rosa', 'Elena', 'Sofía',
+  'Isabel', 'Gabriela', 'Claudia', 'Diana',
 ];
 
 const generateAvatarUrl = (style: string, seed: string) => {

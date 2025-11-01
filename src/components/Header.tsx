@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import { ChevronDown, LogOut, User, RefreshCw, Shield, Settings, Briefcase, Eye, Sparkles, Zap, Crown, Camera } from 'lucide-react';
+import { ChevronDown, LogOut, User, RefreshCw, Shield, Settings, Briefcase, Eye, Sparkles, Zap, Crown, Camera, MessageSquare } from 'lucide-react';
 import { AvatarUpload } from './AvatarUpload';
 import type { Database } from '../lib/database.types';
 
@@ -217,78 +217,106 @@ export function Header() {
           )}
         </div>
 
-        <div className="relative">
+        <div className="flex items-center gap-4">
+          {/* Botón de Feedback */}
           <button
-            onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
+            onClick={() => {/* TODO: Abrir formulario de feedback */}}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
           >
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">{profile?.full_name}</p>
-              <div className="flex items-center justify-end gap-1 mt-0.5">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-slate-100 to-slate-50 text-slate-700 text-xs font-medium shadow-sm border border-slate-200">
-                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white shadow-sm">
-                    {getRoleIcon(profile?.role || '')}
-                  </span>
-                  {getRoleLabel(profile?.role || '')}
-                </span>
-              </div>
-              {profile?.license_type ? (
-                <div className="flex items-center justify-end gap-1 mt-1">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 text-xs font-medium shadow-sm border border-blue-200">
-                    <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white shadow-sm">
-                      {getPlanIcon(profile.license_type)}
-                    </span>
-                    Plan {profile.license_type.toUpperCase()}
-                    {profile.site_limit ? ` • ${profile.site_limit} sitios` : ''}
-                    {!profile.site_limit && profile.license_type === 'promax' ? ' • ∞ sitios' : ''}
-                  </span>
-                </div>
-              ) : (
-                <p className="text-xs text-red-600 font-medium mt-1">Sin licencia</p>
-              )}
-            </div>
-            {currentAvatarUrl ? (
-              <img
-                src={currentAvatarUrl}
-                alt={profile?.full_name}
-                className="w-9 h-9 rounded-full object-cover border-2 border-blue-600 shadow-md"
-              />
-            ) : (
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-md">
-                <User className="w-5 h-5 text-white" />
-              </div>
-            )}
+            <MessageSquare className="w-4 h-4" />
+            Feedback
           </button>
 
+          {/* Botón de perfil con logos circulares */}
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              {/* Logo del Rol */}
+              <div
+                className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shadow-md border-2 border-slate-300"
+                title={getRoleLabel(profile?.role || '')}
+              >
+                {getRoleIcon(profile?.role || '')}
+              </div>
+
+              {/* Logo del Plan */}
+              {profile?.license_type && (
+                <div
+                  className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center shadow-md border-2 border-blue-400"
+                  title={`Plan ${profile.license_type.toUpperCase()}`}
+                >
+                  {getPlanIcon(profile.license_type)}
+                </div>
+              )}
+
+              {/* Avatar */}
+              {currentAvatarUrl ? (
+                <img
+                  src={currentAvatarUrl}
+                  alt={profile?.full_name}
+                  className="w-9 h-9 rounded-full object-cover border-2 border-gray-300 shadow-md hover:border-blue-600 transition"
+                />
+              ) : (
+                <div className="w-9 h-9 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center shadow-md border-2 border-gray-300">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+              )}
+            </button>
+
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
-              <button
-                onClick={() => {
-                  setShowAvatarUpload(true);
-                  setShowUserMenu(false);
-                }}
-                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                <Camera className="w-4 h-4" />
-                Cambiar foto de perfil
-              </button>
-              <button
-                onClick={handleRefreshSession}
-                disabled={refreshing}
-                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                {refreshing ? 'Actualizando...' : 'Refrescar sesión'}
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                <LogOut className="w-4 h-4" />
-                Cerrar sesión
-              </button>
+            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+              {/* Header del menú con info del usuario */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white">
+                <p className="font-semibold text-sm">{profile?.full_name}</p>
+                <p className="text-xs opacity-90">{profile?.email}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/20 text-white text-xs font-medium">
+                    {getRoleIcon(profile?.role || '')}
+                    <span className="ml-0.5">{getRoleLabel(profile?.role || '')}</span>
+                  </span>
+                  {profile?.license_type && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/20 text-white text-xs font-medium">
+                      {getPlanIcon(profile.license_type)}
+                      <span className="ml-0.5">{profile.license_type.toUpperCase()}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Opciones del menú */}
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    setShowAvatarUpload(true);
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <Camera className="w-4 h-4" />
+                  Cambiar foto de perfil
+                </button>
+                <button
+                  onClick={handleRefreshSession}
+                  disabled={refreshing}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  {refreshing ? 'Actualizando...' : 'Refrescar sesión'}
+                </button>
+                <hr className="my-1 border-gray-200" />
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Cerrar sesión
+                </button>
+              </div>
             </div>
           )}
+          </div>
         </div>
       </div>
 
