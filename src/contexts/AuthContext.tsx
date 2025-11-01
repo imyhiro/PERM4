@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: data.user.id,
           email,
           full_name: fullName,
-          role: 'admin',
+          role: 'consultant',
         });
 
       if (profileError) {
